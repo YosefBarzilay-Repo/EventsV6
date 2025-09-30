@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management Desktop</title>
+    <!-- Quill.js Stylesheet -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="main-content-wrapper">
+            <header class="app-header">
+                <h1 id="pageTitle" contenteditable="true">Untitled Event Name</h1>
+                <div class="event-date-display">
+                    <input type="text" id="eventDateDisplayPicker" class="filter-input" placeholder="Set Event Dates">
+                </div>
+                <div class="header-controls">
+                    <button id="manageEventsBtn" class="btn">Manage Events</button>
+                    <button id="settingsBtn" class="btn icon-btn" title="Settings">&#9881;</button>
+                    <button id="newTaskBtn" class="btn btn-primary">Add New Task</button>
+                </div>
+            </header>
+
+            <section id="budget-summary" class="budget-summary">
+                <div class="widget">
+                    <p>Remaining Budget</p>
+                    <h3 id="summaryRemaining">€0.00</h3>
+                    <div class="widget-progress-container">
+                        <div id="budgetProgressBar" class="widget-progress-bar"></div>
+                    </div>
+                </div>
+                <div class="widget">
+                    <p>Open Tasks</p>
+                    <h3 id="openTasksCount">0</h3>
+                    <div class="widget-progress-container">
+                        <div id="tasksProgressBar" class="widget-progress-bar"></div>
+                    </div>
+                </div>
+                <div class="widget">
+                    <p id="eventDaysLabel">Event Days</p>
+                    <h3 id="eventDaysCount">N/A</h3>
+                    <div class="widget-progress-container">
+                        <div id="daysProgressBar" class="widget-progress-bar"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="filter-bar" class="filter-bar">
+                <input type="text" id="searchInput" class="filter-input" placeholder="Search by title or ID..." autocomplete="off">
+                <select id="filterCategory" class="filter-input"></select>
+                <select id="filterOwner" class="filter-input"></select>
+                <div class="date-filter-group">
+                    <input type="text" id="dateRangePicker" class="filter-input" placeholder="Filter by Due Date">
+                </div>
+                <button id="collapseAllCategoriesBtn" class="btn" style="display: none;">Collapse All</button>
+                <button id="clearFiltersBtn" class="btn">Clear Filters</button>
+            </section>
+
+            <main id="task-board" class="task-board">
+                <!-- Tasks will be dynamically inserted here -->
+            </main>
+        </div>
+    </div>
+
+    <!-- The Modal for Adding/Editing Tasks -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="modalTitle">Add New Task</h2>
+            <form id="taskForm">
+                <input type="hidden" id="taskId">
+
+                <div id="taskIdDisplay" class="task-id-display"></div>
+                
+                <label for="category">Category:</label>
+                <select id="category" name="category" required>
+                    <option value="Work">Work</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Health">Health</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <div id="status-form-group">
+                    <label for="status">Status:</label>
+                    <select id="status" name="status">
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Block">Blocked</option>
+                        <option value="Done">Done</option>
+                    </select>
+                </div>
+
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" required autocomplete="off">
+
+                <label for="dueDate">Due Date:</label>
+                <input type="date" id="dueDate" name="dueDate" required>
+
+                <label for="owner">Owner:</label>
+                <select id="owner" name="owner" required>
+                    <!-- Owners will be dynamically inserted here -->
+                </select>
+
+                <label for="description">Description:</label>
+                <div id="descriptionEditor"></div>
+
+                <label for="attachment">Attachment:</label>
+                <input type="file" id="attachment" name="attachment">
+                <span id="attachment-name" class="attachment-info"></span>
+
+                <label for="budget">Budget (Cost):</label>
+                <input type="number" id="budget" name="budget" min="0" step="0.01" placeholder="0.00" autocomplete="off">
+
+                <button type="submit" class="btn btn-primary">Save Task</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- The Modal for Settings -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Settings</h2>
+            <div class="settings-form">
+                <div class="setting-item">
+                    <label>View Mode</label>
+                    <div id="viewModeGroup" class="view-mode-group">
+                        <button class="btn" data-view="kanban">Kanban</button>
+                        <button class="btn" data-view="category">Category</button>
+                        <button class="btn" data-view="budget">Budget</button>
+                        <button class="btn" data-view="archive">Archive</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label for="collapseViewToggle">Collapsed Cards</label>
+                    <div class="toggle-switch-container">
+                        <input type="checkbox" id="collapseViewToggle" class="toggle-switch">
+                        <label for="collapseViewToggle" class="slider"></label>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label for="currencySelect">Currency</label>
+                    <select id="currencySelect" class="filter-input">
+                        <option value="EUR">Euro (€)</option>
+                        <option value="USD">Dollar ($)</option>
+                        <option value="ILS">NIS (₪)</option>
+                        <option value="GBP">Pound (£)</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="totalBudget">Total Budget</label>
+                    <input type="number" id="totalBudget" class="filter-input" min="0" step="100" placeholder="2000.00">
+                </div>
+                <hr>
+                <div class="setting-item-column">
+                    <label>Manage Categories</label>
+                    <ul id="categoryManagerList" class="category-manager-list">
+                        <!-- Categories will be dynamically inserted here -->
+                    </ul>
+                    <div class="add-category-form">
+                        <input type="text" id="newCategoryInput" class="filter-input" placeholder="New category name..." autocomplete="off">
+                        <button id="addCategoryBtn" class="btn">Add</button>
+                    </div>
+                </div>
+                <hr>
+                <div class="setting-item-column">
+                    <label>Manage Users</label>
+                    <ul id="userManagerList" class="category-manager-list">
+                        <!-- Users will be dynamically inserted here -->
+                    </ul>
+                    <div class="add-category-form">
+                        <input type="text" id="newUserInput" class="filter-input" placeholder="New user name..." autocomplete="off">
+                        <button id="addUserBtn" class="btn">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Modal for Event Management -->
+    <div id="eventManagerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Manage Events</h2>
+            <div class="setting-item-column">
+                <label>Your Events</label>
+                <ul id="eventManagerList" class="category-manager-list">
+                    <!-- Events will be dynamically inserted here -->
+                </ul>
+                <hr>
+                <label>Create New Event</label>
+                <div class="add-category-form">
+                    <input type="text" id="newEventNameInput" class="filter-input" placeholder="New event name..." autocomplete="off">
+                    <button id="addEventBtn" class="btn btn-primary">Create Event</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quill.js Script -->
+    <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="mock-data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
