@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const openTasksCountEl = document.getElementById('openTasksCount');
     const eventDaysLabelEl = document.getElementById('eventDaysLabel');
     const eventDaysCountEl = document.getElementById('eventDaysCount');
+    const languageToggle = document.getElementById('languageToggle');
+    const collapseViewToggle = document.getElementById('collapseViewToggle');
     const viewModeGroup = document.getElementById('viewModeGroup');
     const searchInput = document.getElementById('searchInput');
     const filterCategorySelect = document.getElementById('filterCategory');
@@ -47,6 +49,37 @@ document.addEventListener('DOMContentLoaded', () => {
     let filterStartDate = null;
     let filterEndDate = null;
 
+    // --- I18n & Language ---
+    let currentLanguage = localStorage.getItem('language') || 'en';
+
+    const translate = (key, replacements = {}) => {
+        let text = translations[currentLanguage][key] || key;
+        for (const placeholder in replacements) {
+            text = text.replace(`{${placeholder}}`, replacements[placeholder]);
+        }
+        return text;
+    };
+
+    const applyTranslations = () => {
+        document.querySelectorAll('[data-translate-key]').forEach(el => {
+            const key = el.dataset.translateKey;
+            el.textContent = translate(key);
+        });
+        document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+            el.placeholder = translate(el.dataset.translatePlaceholder);
+        });
+        document.querySelectorAll('[data-translate-title]').forEach(el => {
+            el.title = translate(el.dataset.translateTitle);
+        });
+
+        // Special handling for select options
+        document.querySelectorAll('#currencySelect option').forEach(option => {
+            const key = `currency_${option.value.toLowerCase()}`;
+            option.textContent = translate(key);
+        });
+
+    };
+
     // --- Event-centric Data Model ---
     let appData = JSON.parse(localStorage.getItem('appData')) || {};
     let events = appData.events || [];
@@ -69,8 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 categories: JSON.parse(localStorage.getItem('categories')) || ['Work', 'Personal', 'Shopping', 'Health', 'Other'],
                 users: JSON.parse(localStorage.getItem('users')) || [],
                 currency: localStorage.getItem('currency') || 'EUR',
-                eventDates: { start: null, end: null },
-                status: 'In Progress' // Default for migrated events
+                eventDates: { start: null, end: null }
             };
             events = [newEvent];
             currentEventId = newEvent.id;
@@ -78,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Clean up old localStorage items
             ['tasks', 'totalBudget', 'categories', 'users', 'currency', 'pageTitle', 'eventDates'].forEach(key => localStorage.removeItem(key));
-            alert("Your data has been migrated to the new multi-event format!");
+            // alert("Your data has been migrated to the new multi-event format!"); // Muted for better UX
         }
     };
     migrateOldData();
@@ -93,8 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             categories: [...new Set(mockTasks.map(t => t.category))],
             users: [...new Set(mockTasks.map(t => t.owner))].map(name => ({ name, isActive: true })),
             currency: 'USD',
-            eventDates: { start: null, end: null },
-            status: 'In Progress'
+            eventDates: { start: null, end: null }
         };
         events.push(newEvent);
         currentEventId = newEvent.id;
@@ -106,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadCurrentEvent = () => {
         const event = getCurrentEvent();
         if (!event) {
-            pageTitleEl.textContent = "No Event Selected";
+            pageTitleEl.textContent = translate('no_event_selected'); // Assuming this key exists
             // Disable most of the UI
             document.querySelectorAll('button, input, select').forEach(el => {
                 if (el.id !== 'manageEventsBtn') el.disabled = true;
@@ -171,8 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 categories: ['General', 'Planning', 'Execution'],
                 users: [],
                 currency: 'USD',
-                eventDates: { start: null, end: null },
-                status: 'Open'
+                eventDates: { start: null, end: null }
             };
             events.push(newEvent);
             newEventNameInput.value = '';
@@ -183,23 +213,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formatEventListDate = (event) => {
         if (!event.eventDates || !event.eventDates.start) {
-            return 'No date set';
+            return translate('no_date_set');
         }
-        const formatter = (dateStr) => new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const locale = currentLanguage === 'he' ? 'he-IL' : 'en-US';
+        const formatter = (dateStr) => new Date(dateStr).toLocaleDateString(locale, { month: 'short', day: 'numeric' });
         const start = formatter(event.eventDates.start);
         const end = event.eventDates.end ? formatter(event.eventDates.end) : start;
         return start === end ? start : `${start} - ${end}`;
-    };
-
-    const handleEventStatusChange = (e) => {
-        const eventId = parseInt(e.target.dataset.eventId, 10);
-        const newStatus = e.target.value;
-        const event = events.find(ev => ev.id === eventId);
-        if (event) {
-            event.status = newStatus;
-            saveAppData();
-            // No re-render needed, UI is already updated
-        }
     };
 
     const renderEventManager = () => {
@@ -214,18 +234,11 @@ document.addEventListener('DOMContentLoaded', () => {
             li.innerHTML = `
                 <span class="event-list-name">${event.name}</span>
                 <span class="event-list-date">${formatEventListDate(event)}</span>
-                <select class="event-status-select filter-input" data-event-id="${event.id}">
-                    <option value="Open" ${event.status === 'Open' ? 'selected' : ''}>Open</option>
-                    <option value="In Progress" ${event.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-                    <option value="Done" ${event.status === 'Done' ? 'selected' : ''}>Done</option>
-                    <option value="Archived" ${event.status === 'Archived' ? 'selected' : ''}>Archived</option>
-                </select>
             `;
             li.querySelector('.event-list-name').addEventListener('click', () => switchEvent(event.id));
             list.appendChild(li);
         });
 
-        list.querySelectorAll('.event-status-select').forEach(select => select.addEventListener('change', handleEventStatusChange));
     };
 
     const openEventManagerModal = () => {
@@ -323,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const remaining = totalBudget - spent;
 
         const formatter = new Intl.NumberFormat('en-US', {
-            style: 'currency',
+            style: 'currency', // Intl will handle symbol placement
             currency: currency,
         });
 
@@ -393,11 +406,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderKanbanView = () => {
         const statuses = ["Open", "In Progress", "Block", "Done"];
-        taskBoard.className = 'task-board'; // Reset to base class for Kanban view
+        taskBoard.className = 'task-board';
 
         const filteredTasks = applyFilters();
 
         const tasksByStatus = filteredTasks.reduce((acc, task) => {
+            // Always group by the original English status
             (acc[task.status] = acc[task.status] || []).push(task);
             return acc;
         }, {});
@@ -418,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
             columnHeader.className = 'column-header';
 
             const statusTitle = document.createElement('h3');
-            statusTitle.textContent = status;
+            statusTitle.textContent = translate(status.toLowerCase().replace(' ', '_')) || status;
 
             const taskCounter = document.createElement('span');
             taskCounter.className = 'task-counter';
@@ -548,7 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 taskCard.innerHTML = `
                     <h4>${task.title}</h4>
                     <div class="task-footer">
-                        <span class="task-status">${task.status}</span>
+                        <span class="task-status">${translate(task.status.toLowerCase().replace(' ', '_')) || task.status}</span>
                         <span class="task-owner">${task.owner}</span>
                         <span class="task-due-date">Due: ${task.dueDate}</span>
                     </div>
@@ -701,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedDate.setHours(0, 0, 0, 0); // Normalize selected date
 
         if (selectedDate < today) {
-            alert("Due date cannot be in the past. Please select today or a future date.");
+            alert(translate('past_due_date_alert'));
             return; // Stop form submission
         }
 
@@ -865,7 +879,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentValue && !activeUsers.some(u => u.name === currentValue)) {
             const inactiveUser = users.find(u => u.name === currentValue);
             if (inactiveUser) {
-                ownerSelect.innerHTML += `<option value="${inactiveUser.name}">${inactiveUser.name} (Inactive)</option>`;
+                ownerSelect.innerHTML += `<option value="${inactiveUser.name}">${inactiveUser.name} (${translate('inactive')})</option>`;
             }
         }
         ownerSelect.value = currentValue;
@@ -875,7 +889,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dropdowns = [document.getElementById('category'), filterCategorySelect];
         dropdowns.forEach(dropdown => {
             const currentValue = dropdown.value;
-            dropdown.innerHTML = dropdown.id === 'filterCategory' ? '<option value="">All Categories</option>' : '';
+            dropdown.innerHTML = dropdown.id === 'filterCategory' ? `<option value="">${translate('all_categories')}</option>` : '';
             categories.forEach(cat => {
                 dropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
             });
@@ -954,7 +968,22 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('collapsedView', isCollapsed);
     });
 
-        collapseAllCategoriesBtn.addEventListener('click', () => {
+    languageToggle.addEventListener('change', (e) => {
+        currentLanguage = e.target.checked ? 'he' : 'en';
+        localStorage.setItem('language', currentLanguage);
+        document.body.classList.toggle('rtl', e.target.checked);
+        applyTranslations();
+        eventDatePicker.setOptions({ lang: currentLanguage }); // Update picker language
+        // Re-render everything to apply language changes to dynamic content
+        populateFilterDropdowns();
+        renderTasks();
+        updateBudgetSummary();
+        // Update button text that changes
+        const shouldCollapse = Array.from(taskBoard.querySelectorAll('.category-group')).some(group => !group.classList.contains('collapsed'));
+        collapseAllCategoriesBtn.textContent = shouldCollapse ? translate('expand_all') : translate('collapse_all');
+    });
+
+    collapseAllCategoriesBtn.addEventListener('click', () => {
         const allCategoryGroups = taskBoard.querySelectorAll('.category-group');
         // Check if any group is NOT collapsed. If so, we collapse all. Otherwise, we expand all.
         const shouldCollapse = Array.from(allCategoryGroups).some(group => !group.classList.contains('collapsed'));
@@ -966,7 +995,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 group.classList.remove('collapsed');
             }
         });
-        collapseAllCategoriesBtn.textContent = shouldCollapse ? 'Expand All' : 'Collapse All';
+        collapseAllCategoriesBtn.textContent = shouldCollapse ? translate('expand_all') : translate('collapse_all');
     });
 
 
@@ -1042,9 +1071,9 @@ document.addEventListener('DOMContentLoaded', () => {
             renderUserManager();
             newUserInput.value = '';
         } else if (!newUserName) {
-            alert("User name cannot be empty.");
+            alert(translate('user_empty_alert'));
         } else {
-            alert(`User "${newUserName}" already exists.`);
+            alert(translate('user_exists_alert', { user: newUserName }));
         }
     };
 
@@ -1054,7 +1083,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (newUserName && newUserName.trim() !== '' && newUserName !== oldUserName) {
             if (users.some(u => u.name === newUserName)) {
-                alert(`User "${newUserName}" already exists.`);
+                alert(translate('user_exists_alert', { user: newUserName }));
                 return;
             }
             const user = users.find(u => u.name === oldUserName);
@@ -1078,11 +1107,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasActiveTasks = tasks.some(t => t.owner === userToDelete && t.status !== 'Done' && !t.isArchived);
 
         if (hasActiveTasks) {
-            alert(`Cannot delete user "${userToDelete}" because they are assigned to active tasks.`);
+            alert(translate('delete_user_active_alert', { user: userToDelete }));
             return;
         }
 
-        if (confirm(`Are you sure you want to delete the user "${userToDelete}"?`)) {
+        if (confirm(translate('delete_user_confirm', { user: userToDelete }))) {
             users = users.filter(u => u.name !== userToDelete);
             saveUsers();
             renderUserManager();
@@ -1128,9 +1157,9 @@ document.addEventListener('DOMContentLoaded', () => {
             renderCategoryManager();
             newCategoryInput.value = '';
         } else if (!newCat) {
-            alert("Category name cannot be empty.");
+            alert(translate('category_empty_alert'));
         } else {
-            alert(`Category "${newCat}" already exists.`);
+            alert(translate('category_exists_alert', { cat: newCat }));
         }
     };
 
@@ -1140,7 +1169,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (newCat && newCat.trim() !== '' && newCat !== oldCat) {
             if (categories.includes(newCat)) {
-                alert(`Category "${newCat}" already exists.`);
+                alert(translate('category_exists_alert', { cat: newCat }));
                 return;
             }
             const catIndex = categories.indexOf(oldCat);
@@ -1165,11 +1194,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasActiveTasks = tasks.some(t => t.category === catToDelete && t.status !== 'Done' && !t.isArchived);
 
         if (hasActiveTasks) {
-            alert(`Cannot delete "${catToDelete}" because it contains active (not "Done") tasks.`);
+            alert(translate('delete_category_active_alert', { cat: catToDelete }));
             return;
         }
 
-        if (confirm(`Are you sure you want to delete the category "${catToDelete}"? Any remaining "Done" tasks in this category will be reassigned to "Other".`)) {
+        if (confirm(translate('delete_category_confirm', { cat: catToDelete }))) {
             tasks.forEach(task => { if (task.category === catToDelete) task.category = 'Other'; });
             categories = categories.filter(c => c !== catToDelete);
             saveTasks();
@@ -1196,28 +1225,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (today < startDateInstance) {
                 // Event is in the future
-                eventDaysLabelEl.textContent = 'Days to Event';
+                eventDaysLabelEl.textContent = translate('days_to_event');
                 const diffTime = startDateInstance.getTime() - today.getTime();
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 eventDaysCountEl.textContent = diffDays;
                 daysProgressBar.style.width = '0%'; // Event has not started
             } else if (end && today <= new Date(end)) {
                 // Event is currently in progress
-                eventDaysLabelEl.textContent = 'Event Status';
-                eventDaysCountEl.textContent = 'In Progress';
+                eventDaysLabelEl.textContent = translate('event_status');
+                eventDaysCountEl.textContent = translate('in_progress');
                 // The event has started, so progress to the event is 100%
                 daysProgressBar.style.width = '100%';
             } else {
                 // Event is finished
-                eventDaysLabelEl.textContent = 'Event Status';
-                eventDaysCountEl.textContent = 'Finished';
+                eventDaysLabelEl.textContent = translate('event_status');
+                eventDaysCountEl.textContent = translate('finished');
                 // The event has started and finished, so progress to the event is 100%
                 daysProgressBar.style.width = '100%';
             }
             daysProgressBar.classList.add('progress-green'); // Or other logic you prefer
         } else {
             // No date set
-            eventDaysLabelEl.textContent = 'Event Days';
+            eventDaysLabelEl.textContent = translate('event_days');
             eventDaysCountEl.textContent = 'N/A';
             daysProgressBar.style.width = '0%';
         }
@@ -1261,6 +1290,7 @@ document.addEventListener('DOMContentLoaded', () => {
             element: eventDateDisplayPickerEl,
             singleMode: false,
             format: 'MMM DD, YYYY',
+            lang: currentLanguage,
             minDate: new Date(),
             setup: (picker) => {
                 picker.on('selected', (date1, date2) => {
@@ -1299,9 +1329,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.app-container').classList.add('collapsed-view');
     }
 
+    if (currentLanguage === 'he') {
+        languageToggle.checked = true;
+        document.body.classList.add('rtl');
+    }
+
     initializeQuill();
     initializeDateRangePicker();
     syncDataFromCurrentEvent();
     loadCurrentEvent();
     updateViewModeButtons(savedViewMode);
+    applyTranslations();
 });
