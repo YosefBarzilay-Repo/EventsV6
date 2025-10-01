@@ -20,4 +20,12 @@
     "role": "beta",
     "isActive": true
   }
+,
+  {
+    "id": 4,
+    "username": "ops",
+    "password": "ops",
+    "role": "operations",
+    "isActive": true
+  }
 ]

@@ -152,26 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const initializeAppData = (usersToAssign) => {
         // Assign owners from the global user list to mock tasks
         const owners = usersToAssign.map(u => u.username);
-        mockTasks.forEach((task, index) => {
+        mockEvents.forEach(event => event.tasks.forEach((task, index) => {
             task.owner = owners[index % owners.length];
-        });
-
-        const newEvent = {
-            id: Date.now(),
-            name: 'My First Conference',
-            tasks: mockTasks,
-            totalBudget: 50000,
-            categories: [...new Set(mockTasks.map(t => t.category))],
-            currency: 'USD',
-            eventDates: { start: null, end: null },
-            owner: 'Admin',
-            contactNumber: '555-1234',
-            contactMail: 'admin@example.com'
-        };
-        events.push(newEvent);
-        currentEventId = newEvent.id;
+        }));
+        events = mockEvents;
+        currentEventId = events[0].id; // Set the first event as current
     };
-
     // --- Initializations ---
     const initializeQuill = () => {
         quill = new Quill('#descriptionEditor', {
@@ -276,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load initial data
     (async () => {
         showLoader();
-        if (allUsers.length === 0) {
+        if (allUsers.length === 0 && useMockData) {
             try {
                 const response = await fetch('settings/usersAndRoles/UsersAndRoles.json');
                 allUsers = await response.json();
@@ -286,8 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (events.length === 0 && useMockData && typeof mockTasks !== 'undefined') {
-            initializeAppData(allUsers);
+        if (events.length === 0 && useMockData && typeof mockEvents !== 'undefined') {
+            initializeAppData(allUsers); // Pass users to assign owners
         }
 
         // Now that all data is loaded, initialize the app UI
@@ -298,6 +284,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const getCurrentEvent = () => events.find(e => e.id === currentEventId);
 
     const loadCurrentEvent = () => {
+        // If user is an operations manager, show the operations view instead.
+        if (loggedInUser.role === 'operations' && (localStorage.getItem('viewMode') === 'operations')) {
+            renderOperationsView();
+            // Hide elements not relevant to operations view
+            document.getElementById('budget-summary').style.display = 'none';
+            return;
+        }
+
         const event = getCurrentEvent();
         if (!event) {
             pageTitleEl.textContent = translate('no_event_selected'); // Assuming this key exists
@@ -310,6 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Re-enable UI
+        document.getElementById('budget-summary').style.display = 'grid';
         document.querySelectorAll('button, input, select').forEach(el => el.disabled = false);
 
         pageTitleEl.textContent = event.name;
@@ -334,9 +329,12 @@ document.addEventListener('DOMContentLoaded', () => {
             totalBudget = event.totalBudget;
             categories = event.categories;
             currency = event.currency;
+            // allUsers is global, but let's ensure it's not undefined
+            allUsers = appData.allUsers || [];
         } else {
             // Reset data if no event is selected
-            tasks = []; totalBudget = 0; categories = []; users = []; currency = 'USD';
+            tasks = []; totalBudget = 0; categories = []; currency = 'USD';
+            allUsers = appData.allUsers || [];
         }
     };
 
@@ -345,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return translate('no_date_set');
         }
         const locale = currentLanguage === 'he' ? 'he-IL' : 'en-US';
-        const formatter = (dateStr) => new Date(dateStr).toLocaleDateString(locale, { month: 'short', day: 'numeric' });
+        const formatter = (dateStr) => new Date(dateStr).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
         const start = formatter(event.eventDates.start);
         const end = event.eventDates.end ? formatter(event.eventDates.end) : start;
         return start === end ? start : `${start} - ${end}`;
@@ -579,6 +577,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const endDateMatch = !end || taskDueDate <= end;
 
             return isArchivedMatch && searchMatch && categoryMatch && ownerMatch && startDateMatch && endDateMatch;
+        });
+    };
+
+    const applyEventFilters = () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        const start = filterStartDate ? filterStartDate.dateInstance : null;
+        const end = filterEndDate ? filterEndDate.dateInstance : null;
+
+        return events.filter(event => {
+            const searchMatch = !searchTerm || event.name.toLowerCase().includes(searchTerm);
+
+            const eventStart = event.eventDates.start ? new Date(event.eventDates.start) : null;
+            const eventEnd = event.eventDates.end ? new Date(event.eventDates.end) : eventStart;
+
+            // Check if event range overlaps with filter range
+            const dateMatch = !start || !eventStart || (eventStart <= end && eventEnd >= start);
+
+            return searchMatch && dateMatch;
         });
     };
 
@@ -895,6 +911,76 @@ document.addEventListener('DOMContentLoaded', () => {
         taskBoard.appendChild(table);
     };
 
+    const renderOperationsView = () => {
+        taskBoard.innerHTML = '';
+        taskBoard.className = 'task-board operations-view-active'; // Set class for styling
+
+        // Apply filters to the events list
+        const filteredEvents = applyEventFilters();
+
+        let grandTotalBudget = 0;
+        const defaultCurrency = 'USD'; // Use a default for summing
+
+        const table = document.createElement('table');
+        table.className = 'budget-table'; // Reuse budget table styles
+
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>${translate('event_name')}</th>
+                    <th>${translate('open_tasks')}</th>
+                    <th>${translate('event_dates_label')}</th>
+                    <th>${translate('total_budget')}</th>
+                </tr>
+            </thead>
+        `;
+
+        const tbody = document.createElement('tbody');
+        filteredEvents.forEach(event => {
+            const openTasks = event.tasks.filter(t => t.status !== 'Done' && !t.isArchived).length;
+            const budget = parseFloat(event.totalBudget) || 0;
+            grandTotalBudget += budget; // Note: This doesn't account for different currencies
+
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: event.currency || defaultCurrency,
+            });
+
+            const row = document.createElement('tr');
+            row.dataset.eventId = event.id;
+            row.style.cursor = 'pointer';
+            row.title = `Click to view event: ${event.name}`;
+            row.innerHTML = `
+                <td>${event.name}</td>
+                <td>${openTasks}</td>
+                <td>${formatEventListDate(event)}</td>
+                <td>${formatter.format(budget)}</td>
+            `;
+            row.addEventListener('click', () => {
+                // Switch to the clicked event
+                switchEvent(event.id);
+                // Force the view to Kanban for the detailed view
+                localStorage.setItem('viewMode', 'kanban');
+                updateViewModeButtons('kanban');
+            });
+            tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+
+        const tfoot = document.createElement('tfoot');
+        const totalFormatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: defaultCurrency,
+        });
+        tfoot.innerHTML = `
+            <tr>
+                <td colspan="3">${translate('grand_total_budget')}</td>
+                <td>${totalFormatter.format(grandTotalBudget)}</td>
+            </tr>`;
+        table.appendChild(tfoot);
+
+        taskBoard.appendChild(table);
+    };
     const renderTasks = () => {
         if (!getCurrentEvent()) {
             loadCurrentEvent(); // This will show the "No event" message
@@ -908,6 +994,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderBudgetView();
         } else if (viewMode === 'category') {
             renderCategoryView();
+        } else if (viewMode === 'operations') {
+            renderOperationsView();
         } else {
             renderKanbanView();
         }
@@ -1296,26 +1384,13 @@ document.addEventListener('DOMContentLoaded', () => {
         viewModeGroup.querySelectorAll('button').forEach(button => {
             button.classList.toggle('active', button.dataset.view === activeView);
         });
+        // Show/hide operations button based on role
+        const opsButton = viewModeGroup.querySelector('[data-view="operations"]');
+        if (opsButton) {
+            opsButton.style.display = (loggedInUser.role === 'operations') ? 'inline-block' : 'none';
+        }
+
     };
-
-    // --- Page Title Listeners ---
-    pageTitleEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault(); // Prevent adding a new line
-            pageTitleEl.blur();   // Trigger the blur event to save
-        }
-    });
-
-    pageTitleEl.addEventListener('blur', () => {
-        const newTitle = pageTitleEl.textContent.trim();
-        const event = getCurrentEvent();
-        if (event && newTitle) {
-            event.name = newTitle;
-            saveAppData();
-        } else if (event) {
-            pageTitleEl.textContent = event.name; // Revert if empty
-        }
-    });
 
     document.getElementById('createEventForm').addEventListener('submit', (e) => { e.preventDefault(); addEvent(); });
 
@@ -1369,6 +1444,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show/hide users tab based on role
         const usersTab = document.getElementById('usersTab');
         if (loggedInUser.role === 'admin') {
+            usersTab.style.display = 'block';
+        } else if (loggedInUser.role === 'operations') {
+            // Operations can also see users, but maybe not edit? For now, let's allow it.
             usersTab.style.display = 'block';
         } else {
             usersTab.style.display = 'none';
@@ -1453,7 +1531,11 @@ document.addEventListener('DOMContentLoaded', () => {
     taskForm.addEventListener('submit', handleFormSubmit);
 
     // Initial View Mode Setup
-    const savedViewMode = localStorage.getItem('viewMode') || 'kanban';
+    let savedViewMode = localStorage.getItem('viewMode') || 'kanban';
+    if (loggedInUser.role === 'operations') {
+        savedViewMode = 'operations';
+        localStorage.setItem('viewMode', 'operations');
+    }
 
     const savedCollapsedView = localStorage.getItem('collapsedView') === 'true';
     if (savedCollapsedView) {

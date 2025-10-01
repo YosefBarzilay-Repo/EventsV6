@@ -16,6 +16,7 @@ function initializeUserManagement(app, translate) {
                     <select class="user-role-select filter-input" data-username="${user.username}">
                         <option value="regular" ${user.role === 'regular' ? 'selected' : ''}>Regular</option>
                         <option value="beta" ${user.role === 'beta' ? 'selected' : ''}>Beta</option>
+                        <option value="operations" ${user.role === 'operations' ? 'selected' : ''}>Operations Manager</option>
                         <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
                     </select>
                     <div class="toggle-switch-container">

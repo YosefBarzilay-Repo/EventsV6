@@ -1,4 +1,4 @@
-const mockTasks = [
+const mockConferenceTasks = [
     {
         id: 1000001,
         category: "Venue",
@@ -103,4 +103,54 @@ const mockTasks = [
     { id: 1000048, category: "Logistics", status: "Done", title: "Team Kick-off Meeting", dueDate: "2024-07-30", owner: "Diana", description: "<p>Initial planning meeting completed.</p>", budget: "0", attachment: null, isArchived: false },
     { id: 1000049, category: "Budget", status: "Open", title: "Apply for City Event Grant", dueDate: "2025-04-15", owner: "Eve", description: "<p>Gather all necessary documents for the grant application.</p>", budget: "0", attachment: null, isArchived: false },
     { id: 1000050, category: "Budget", status: "Open", title: "Finalize Project Budget", dueDate: "2024-08-07", owner: "Alice", description: "<p>Review all estimated costs and create the final master budget.</p>", budget: "0", attachment: null, isArchived: false }
+];
+
+const mockWeddingTasks = [
+    { id: 2000001, category: "Planning", status: "Done", title: "Book Photographer", dueDate: "2024-08-01", owner: "Alice", description: "<p>Signed contract with 'Elegant Snaps'.</p>", budget: "3000", isArchived: false },
+    { id: 2000002, category: "Planning", status: "In Progress", title: "Send Invitations", dueDate: "2024-08-15", owner: "Bob", description: "<p>Waiting for final guest list from client.</p>", budget: "500", isArchived: false },
+    { id: 2000003, category: "Day-Of", status: "Open", title: "Coordinate with Florist", dueDate: "2024-09-20", owner: "Alice", description: "<p>Confirm delivery times and setup locations.</p>", budget: "2500", isArchived: false },
+];
+
+const mockProductLaunchTasks = [
+    { id: 3000001, category: "Marketing", status: "In Progress", title: "Prepare Press Kit", dueDate: "2024-08-20", owner: "Charlie", description: "<p>Drafting press release and gathering product images.</p>", budget: "1000", isArchived: false },
+    { id: 3000002, category: "Logistics", status: "Open", title: "Book Demo Space", dueDate: "2024-08-10", owner: "Diana", description: "<p>Need to secure a booth at the Tech Expo.</p>", budget: "5000", isArchived: false },
+];
+
+const mockEvents = [
+    {
+        id: 1,
+        name: 'Annual Tech Conference 2024',
+        tasks: mockConferenceTasks,
+        totalBudget: 50000,
+        categories: [...new Set(mockConferenceTasks.map(t => t.category))],
+        currency: 'USD',
+        eventDates: { start: "2024-10-15T00:00:00.000Z", end: "2024-10-17T00:00:00.000Z" },
+        owner: 'Alice',
+        contactNumber: '555-1234',
+        contactMail: 'alice@example.com'
+    },
+    {
+        id: 2,
+        name: 'Smith & Jones Wedding',
+        tasks: mockWeddingTasks,
+        totalBudget: 15000,
+        categories: ["Planning", "Day-Of", "Vendors"],
+        currency: 'GBP',
+        eventDates: { start: "2024-09-28T00:00:00.000Z", end: "2024-09-28T00:00:00.000Z" },
+        owner: 'Bob',
+        contactNumber: '555-5678',
+        contactMail: 'bob@example.com'
+    },
+    {
+        id: 3,
+        name: 'Project "Phoenix" Launch',
+        tasks: mockProductLaunchTasks,
+        totalBudget: 25000,
+        categories: ["Marketing", "Logistics", "PR"],
+        currency: 'EUR',
+        eventDates: { start: "2024-11-01T00:00:00.000Z", end: null },
+        owner: 'Charlie',
+        contactNumber: '555-9012',
+        contactMail: 'charlie@example.com'
+    }
 ];
