@@ -19,8 +19,8 @@
             <header class="app-header">
                 <div class="header-left">
                     <h1 id="pageTitle" contenteditable="true">Untitled Event Name</h1>
-                    <div class="event-date-display">
-                        <input type="text" id="eventDateDisplayPicker" class="filter-input" data-translate-placeholder="set_event_dates" placeholder="Set Event Dates">
+                    <div id="headerEventDateDisplay" class="header-event-date" data-translate-key="no_date_set">
+                        No dates set
                     </div>
                 </div>
                 <div class="header-right">
@@ -199,14 +199,7 @@
                     <!-- Events will be dynamically inserted here -->
                 </ul>
                 <hr>
-                <label data-translate-key="create_new_event">Create New Event</label>
-                <div class="add-event-form">
-                    <input type="text" id="newEventNameInput" class="filter-input" data-translate-placeholder="new_event_placeholder" placeholder="New event name..." autocomplete="off">
-                    <input type="text" id="newEventOwnerInput" class="filter-input" data-translate-placeholder="event_owner_placeholder" placeholder="Event owner..." autocomplete="off">
-                    <input type="tel" id="newEventContactNumberInput" class="filter-input" data-translate-placeholder="contact_number_placeholder" placeholder="Contact number..." autocomplete="off">
-                    <input type="email" id="newEventContactMailInput" class="filter-input" data-translate-placeholder="contact_email_placeholder" placeholder="Contact email..." autocomplete="off">
-                    <button id="addEventBtn" class="btn btn-primary" data-translate-key="create_event">Create Event</button>
-                </div>
+                <button id="openCreateEventModalBtn" class="btn btn-primary" data-translate-key="create_new_event" style="width: 100%; margin-top: 10px;">Create New Event</button>
             </div>
         </div>
     </div>
@@ -214,6 +207,26 @@
     <!-- Quill.js Script -->
     <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+    <!-- The Modal for Creating Events -->
+    <div id="createEventModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 data-translate-key="create_new_event">Create New Event</h2>
+            <form id="createEventForm" class="add-event-form">
+                <input type="hidden" id="editEventId">
+                <input type="text" id="newEventNameInput" class="filter-input" data-translate-placeholder="new_event_placeholder" placeholder="New event name..." autocomplete="off">
+                <input type="text" id="newEventOwnerInput" class="filter-input" data-translate-placeholder="event_owner_placeholder" placeholder="Event owner..." autocomplete="off">
+                <input type="tel" id="newEventContactNumberInput" class="filter-input" data-translate-placeholder="contact_number_placeholder" placeholder="Contact number..." autocomplete="off">
+                <input type="email" id="newEventContactMailInput" class="filter-input" data-translate-placeholder="contact_email_placeholder" placeholder="Contact email..." autocomplete="off">
+                <div class="date-filter-group" style="grid-column: 1 / -1;">
+                    <input type="text" id="newEventDatePicker" class="filter-input" data-translate-placeholder="set_event_dates" placeholder="Set Event Dates">
+                </div>
+                <button id="addEventBtn" type="submit" class="btn btn-primary">Create Event</button>
+            </form>
+        </div>
+    </div>
+
     <script src="settings/usersAndRoles/usersAndRoles.js"></script>
     <script src="settings/categoryManagement.js"></script>
     <script src="translations.js"></script>

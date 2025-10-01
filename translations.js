@@ -56,6 +56,7 @@ const translations = {
         'your_events': 'Your Events',
         'no_date_set': 'No date set',
         'create_new_event': 'Create New Event',
+        'edit_event': 'Edit Event',
         'event_owner_placeholder': 'Event owner...',
         'contact_number_placeholder': 'Contact number...',
         'contact_email_placeholder': 'Contact email...',
@@ -73,6 +74,7 @@ const translations = {
         'delete_user_active_alert': 'Cannot delete user "{user}" because they are assigned to active tasks.',
         'delete_last_admin_alert': 'Cannot delete the last administrator.',
         'remove_last_admin_role_alert': 'Cannot remove the last administrator role.',
+        'save_changes': 'Save Changes',
         'delete_user_confirm': 'Are you sure you want to delete the user "{user}"?',
     },
     he: {
@@ -135,6 +137,7 @@ const translations = {
         'your_events': 'האירועים שלך',
         'no_date_set': 'לא הוגדר תאריך',
         'create_new_event': 'צור אירוע חדש',
+        'edit_event': 'ערוך אירוע',
         'event_owner_placeholder': 'בעל האירוע...',
         'contact_number_placeholder': 'מספר ליצירת קשר...',
         'contact_email_placeholder': 'מייל ליצירת קשר...',
@@ -152,6 +155,7 @@ const translations = {
         'delete_user_active_alert': 'לא ניתן למחוק את המשתמש "{user}" מכיוון שהוא משויך למשימות פעילות.',
         'delete_last_admin_alert': 'לא ניתן למחוק את המנהל האחרון.',
         'remove_last_admin_role_alert': 'לא ניתן להסיר את תפקיד המנהל האחרון.',
+        'save_changes': 'שמור שינויים',
         'delete_user_confirm': 'האם אתה בטוח שברצונך למחוק את המשתמש "{user}"?',
         // Statuses
         'status_open': 'חדש',

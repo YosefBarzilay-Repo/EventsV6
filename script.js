@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logoutBtn');
     const eventManagerModal = document.getElementById('eventManagerModal');
     const modal = document.getElementById('taskModal');
+    const createEventModal = document.getElementById('createEventModal');
+    const openCreateEventModalBtn = document.getElementById('openCreateEventModalBtn');
     const settingsModal = document.getElementById('settingsModal');
     const closeModalBtn = document.querySelector('.close-button');
     const taskForm = document.getElementById('taskForm');
@@ -48,7 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const newEventContactNumberInput = document.getElementById('newEventContactNumberInput');
     const newEventContactMailInput = document.getElementById('newEventContactMailInput');
     const addEventBtn = document.getElementById('addEventBtn');
-    const eventDateDisplayPickerEl = document.getElementById('eventDateDisplayPicker');
+    const editEventIdInput = document.getElementById('editEventId');
+    const headerEventDateDisplay = document.getElementById('headerEventDateDisplay');
     const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
     // --- Mock Data Control Flag ---
@@ -166,6 +169,22 @@ document.addEventListener('DOMContentLoaded', () => {
         currentEventId = newEvent.id;
     };
 
+    // --- Initializations ---
+    const initializeQuill = () => {
+        quill = new Quill('#descriptionEditor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    ['clean']
+                ]
+            }
+        });
+    };
+
 
     const initializeDateRangePicker = () => {
         datePicker = new Litepicker({
@@ -187,31 +206,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize eventDatePicker with its handlers
         eventDatePicker = new Litepicker({
-            element: eventDateDisplayPickerEl,
+            element: document.getElementById('newEventDatePicker'),
             singleMode: false,
             format: 'MMM DD, YYYY',
             lang: currentLanguage,
             minDate: new Date(),
-            setup: (picker) => {
-                picker.on('selected', (date1, date2) => {
-                    const event = getCurrentEvent();
-                    if (event) {
-                        event.eventDates.start = date1.toJSDate().toISOString();
-                        event.eventDates.end = date2.toJSDate().toISOString();
-                        saveAppData();
-                        updateEventDaysCounter(date1, date2);
-                    }
-                });
-                picker.on('clear', () => {
-                    const event = getCurrentEvent();
-                    if (event) {
-                        event.eventDates.start = null;
-                        event.eventDates.end = null;
-                        saveAppData();
-                        updateEventDaysCounter(null, null);
-                    }
-                });
-            },
         });
     };
 
@@ -269,12 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
         totalBudgetInput.value = event.totalBudget > 0 ? event.totalBudget.toFixed(2) : '';
         currencySelect.value = event.currency;
 
-        if (event.eventDates.start && event.eventDates.end) {
-            eventDatePicker.setStartDate(event.eventDates.start);
-            eventDatePicker.setEndDate(event.eventDates.end);
-        } else {
-            eventDatePicker.clearSelection();
-        }
+        headerEventDateDisplay.textContent = formatEventListDate(event);
 
         populateAllCategoryDropdowns();
         populateOwnerDropdown();
@@ -308,8 +302,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const addEvent = () => {
         const newEventName = newEventNameInput.value.trim();
-        const newEventOwner = newEventOwnerInput.value.trim();
-        if (newEventName) {
+        const eventId = editEventIdInput.value;
+
+        if (!newEventName) {
+            alert("Event name cannot be empty.");
+            return;
+        }
+
+        if (eventId) {
+            // Editing an existing event
+            const event = events.find(e => e.id == eventId);
+            if (event) {
+                event.name = newEventName;
+                event.owner = newEventOwnerInput.value.trim();
+                event.contactNumber = newEventContactNumberInput.value.trim();
+                event.contactMail = newEventContactMailInput.value.trim();
+                event.eventDates.start = eventDatePicker.getStartDate() ? eventDatePicker.getStartDate().toJSDate().toISOString() : null;
+                event.eventDates.end = eventDatePicker.getEndDate() ? eventDatePicker.getEndDate().toJSDate().toISOString() : null;
+            }
+        } else {
+            // Creating a new event
+            const newEventOwner = newEventOwnerInput.value.trim() || 'Admin';
+            const startDate = eventDatePicker.getStartDate() ? eventDatePicker.getStartDate().toJSDate().toISOString() : null;
+            const endDate = eventDatePicker.getEndDate() ? eventDatePicker.getEndDate().toJSDate().toISOString() : null;
+
             const newEvent = {
                 id: Date.now(),
                 name: newEventName,
@@ -320,17 +336,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalBudget: 0,
                 categories: ['General', 'Planning', 'Execution'],
                 currency: 'USD',
-                eventDates: { start: null, end: null }
+                eventDates: { start: startDate, end: endDate }
             };
             events.push(newEvent);
-            // Clear input fields
-            newEventNameInput.value = '';
-            newEventOwnerInput.value = '';
-            newEventContactNumberInput.value = '';
-            newEventContactMailInput.value = '';
+        }
 
-            renderEventManager();
-            switchEvent(newEvent.id);
+        saveAppData();
+        renderEventManager();
+        closeCreateEventModal();
+        if (eventId == currentEventId) {
+            loadCurrentEvent(); // Refresh main UI if the active event was edited
         }
     };
 
@@ -358,8 +373,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="event-list-name">${event.name}</span>
                 <span class="event-list-owner">${event.owner || ''}</span>
                 <span class="event-list-date">${formatEventListDate(event)}</span>
+                <div class="category-manager-actions">
+                    <button class="edit-event-btn" title="Edit Event" data-event-id="${event.id}">&#9998;</button>
+                </div>
             `;
             li.querySelector('.event-list-name').addEventListener('click', () => switchEvent(event.id));
+            li.querySelector('.edit-event-btn').addEventListener('click', (e) => openEditEventModal(e.currentTarget.dataset.eventId));
             list.appendChild(li);
         });
 
@@ -372,6 +391,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const closeEventManagerModal = () => {
         eventManagerModal.style.display = 'none';
+    };
+
+    const openCreateEventModal = () => {
+        createEventModal.querySelector('h2').textContent = translate('create_new_event');
+        document.getElementById('createEventForm').reset();
+        editEventIdInput.value = '';
+        addEventBtn.textContent = translate('create_event');
+        eventDatePicker.clearSelection();
+        eventManagerModal.style.display = 'none'; // Close the manager modal
+        createEventModal.style.display = 'block';
+    };
+
+    const openEditEventModal = (eventId) => {
+        const event = events.find(e => e.id == eventId);
+        if (!event) return;
+
+        createEventModal.querySelector('h2').textContent = translate('edit_event'); // You'll need to add this translation key
+        addEventBtn.textContent = translate('save_changes');
+        editEventIdInput.value = event.id;
+        newEventNameInput.value = event.name;
+        newEventOwnerInput.value = event.owner || '';
+        newEventContactNumberInput.value = event.contactNumber || '';
+        newEventContactMailInput.value = event.contactMail || '';
+
+        if (event.eventDates.start) {
+            eventDatePicker.setStartDate(event.eventDates.start);
+            if (event.eventDates.end) {
+                eventDatePicker.setEndDate(event.eventDates.end);
+            }
+        } else {
+            eventDatePicker.clearSelection();
+        }
+
+        eventManagerModal.style.display = 'none';
+        createEventModal.style.display = 'block';
+    };
+
+    const closeCreateEventModal = () => {
+        createEventModal.style.display = 'none';
     };
 
     // --- End Event Management ---
@@ -810,12 +868,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const cost = parseFloat(task.budget) || 0;
             totalCost += cost;
             const row = document.createElement('tr');
+            row.dataset.id = task.id;
+            row.style.cursor = 'pointer';
             row.innerHTML = `
                 <td>${task.title}</td>
                 <td>${task.category}</td>
                 <td>${task.owner}</td>
                 <td>${formatter.format(cost)}</td>
             `;
+            row.addEventListener('click', () => {
+                editTask(task.id);
+            });
             tbody.appendChild(row);
         });
         table.appendChild(tbody);
@@ -1083,6 +1146,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openModal();
     });
     manageEventsBtn.addEventListener('click', openEventManagerModal);
+    openCreateEventModalBtn.addEventListener('click', openCreateEventModal);
 
     logoutBtn.addEventListener('click', () => {
         sessionStorage.removeItem('isLoggedIn');
@@ -1177,7 +1241,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    taskForm.addEventListener('submit', handleFormSubmit);
+    document.getElementById('createEventForm').addEventListener('submit', (e) => { e.preventDefault(); addEvent(); });
 
     const updateEventDaysCounter = (date1 = null, date2 = null) => {
         const event = getCurrentEvent();
@@ -1221,22 +1285,6 @@ document.addEventListener('DOMContentLoaded', () => {
             eventDaysCountEl.textContent = 'N/A';
             daysProgressBar.style.width = '0%';
         }
-    };
-
-    // --- Initializations ---
-    const initializeQuill = () => {
-        quill = new Quill('#descriptionEditor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                    [{ 'color': [] }, { 'background': [] }],
-                    ['clean']
-                ]
-            }
-        });
     };
 
     
@@ -1308,6 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Centralized Modal Event Listeners
     settingsModal.querySelector('.close-button').addEventListener('click', closeSettingsModal);
     eventManagerModal.querySelector('.close-button').addEventListener('click', closeEventManagerModal);
+    createEventModal.querySelector('.close-button').addEventListener('click', closeCreateEventModal);
     closeModalBtn.addEventListener('click', closeModal);
 
     window.addEventListener('click', (e) => {
@@ -1319,6 +1368,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (e.target === eventManagerModal) {
             closeEventManagerModal();
+        }
+        if (e.target === createEventModal) {
+            closeCreateEventModal();
         }
     });
 
