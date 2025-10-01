@@ -223,6 +223,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.contactMail = newEventContactMailInput.value.trim();
                 event.eventDates.start = eventDatePicker.getStartDate() ? eventDatePicker.getStartDate().toJSDate().toISOString() : null;
                 event.eventDates.end = eventDatePicker.getEndDate() ? eventDatePicker.getEndDate().toJSDate().toISOString() : null;
+                
+                // If the edited event is the currently active one, reload the UI
+                if (event.id === currentEventId) {
+                    loadCurrentEvent();
+                }
             }
         } else {
             // Creating a new event
@@ -247,6 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         saveAppData();
+        closeCreateEventModal();
     };
 
     function initializeAppUI() {
