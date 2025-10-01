@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+    <div class="setting-item-column">
+        <label data-translate-key="manage_users">Manage Users</label>
+        <ul id="userManagerList" class="category-manager-list">
+            <!-- Users will be dynamically inserted here -->
+        </ul>
+        <hr>
+        <label data-translate-key="add_new_user">Add New User</label>
+        <div class="add-user-form">
+            <input type="text" id="newUsernameInput" class="filter-input" data-translate-placeholder="new_user_placeholder" placeholder="New user name..." autocomplete="off">
+            <input type="password" id="newUserPasswordInput" class="filter-input" placeholder="Password..." autocomplete="off">
+            <select id="newUserRoleSelect">
+                <option value="regular">Regular</option>
+                <option value="beta">Beta</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button id="addUserBtn" class="btn" data-translate-key="add">Add</button>
+        </div>
+    </div>
+</body>
+</html>

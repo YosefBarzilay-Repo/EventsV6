@@ -67,6 +67,8 @@ const translations = {
         'user_exists_alert': 'User "{user}" already exists.',
         'rename_user_prompt': 'Rename user "{user}":',
         'delete_user_active_alert': 'Cannot delete user "{user}" because they are assigned to active tasks.',
+        'delete_last_admin_alert': 'Cannot delete the last administrator.',
+        'remove_last_admin_role_alert': 'Cannot remove the last administrator role.',
         'delete_user_confirm': 'Are you sure you want to delete the user "{user}"?',
     },
     he: {
@@ -140,6 +142,8 @@ const translations = {
         'user_exists_alert': 'המשתמש "{user}" כבר קיים.',
         'rename_user_prompt': 'שנה שם משתמש "{user}":',
         'delete_user_active_alert': 'לא ניתן למחוק את המשתמש "{user}" מכיוון שהוא משויך למשימות פעילות.',
+        'delete_last_admin_alert': 'לא ניתן למחוק את המנהל האחרון.',
+        'remove_last_admin_role_alert': 'לא ניתן להסיר את תפקיד המנהל האחרון.',
         'delete_user_confirm': 'האם אתה בטוח שברצונך למחוק את המשתמש "{user}"?',
         // Statuses
         'status_open': 'חדש',

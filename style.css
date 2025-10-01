@@ -638,6 +638,40 @@ body {
 
 .setting-item label { font-weight: 600; }
 
+.tab-container {
+    width: 100%;
+}
+
+.tab-header {
+    display: flex;
+    border-bottom: 1px solid #C2A68C;
+    margin-bottom: 20px;
+}
+
+.tab-link {
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 16px;
+    color: #8D99AE;
+}
+
+.tab-link.active {
+    color: #5D866C;
+    border-bottom-color: #5D866C;
+    font-weight: 600;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
 .view-mode-group {
     display: flex;
     border: 1px solid #C2A68C;
@@ -730,6 +764,11 @@ body {
     gap: 10px;
 }
 
+.add-user-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+}
 /* Quill Editor Height */
 .ql-container.ql-snow {
     height: 150px;

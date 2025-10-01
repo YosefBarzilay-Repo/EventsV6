@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
+
+    // Security Guard: Redirect to login if not authenticated
+    if (!loggedInUser) {
+        window.location.href = 'login/login.html';
+        return; // Stop further execution
+    }
+
     const newTaskBtn = document.getElementById('newTaskBtn');
     const settingsBtn = document.getElementById('settingsBtn');
     const manageEventsBtn = document.getElementById('manageEventsBtn');
@@ -33,10 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterOwnerInput = document.getElementById('filterOwner');
     const dateRangePickerEl = document.getElementById('dateRangePicker');
     const currencySelect = document.getElementById('currencySelect');
-    const newCategoryInput = document.getElementById('newCategoryInput');
-    const addCategoryBtn = document.getElementById('addCategoryBtn');
-    const newUserInput = document.getElementById('newUserInput');
-    const addUserBtn = document.getElementById('addUserBtn');
     const newEventNameInput = document.getElementById('newEventNameInput');
     const addEventBtn = document.getElementById('addEventBtn');
     const eventDateDisplayPickerEl = document.getElementById('eventDateDisplayPicker');
@@ -83,10 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event-centric Data Model ---
     let appData = JSON.parse(localStorage.getItem('appData')) || {};
     let events = appData.events || [];
+    let allUsers = appData.allUsers || []; // Central user list
     let currentEventId = appData.currentEventId || null;
 
     const saveAppData = () => {
-        appData = { events, currentEventId };
+        appData = { events, currentEventId, allUsers }; // Now also saves the user list
         localStorage.setItem('appData', JSON.stringify(appData));
     };
 
@@ -100,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tasks: oldTasks,
                 totalBudget: parseFloat(localStorage.getItem('totalBudget')) || 0,
                 categories: JSON.parse(localStorage.getItem('categories')) || ['Work', 'Personal', 'Shopping', 'Health', 'Other'],
-                users: JSON.parse(localStorage.getItem('users')) || [],
+                // Users are now global, not per-event
                 currency: localStorage.getItem('currency') || 'EUR',
                 eventDates: { start: null, end: null }
             };
@@ -109,28 +114,118 @@ document.addEventListener('DOMContentLoaded', () => {
             saveAppData();
 
             // Clean up old localStorage items
-            ['tasks', 'totalBudget', 'categories', 'users', 'currency', 'pageTitle', 'eventDates'].forEach(key => localStorage.removeItem(key));
+            ['tasks', 'totalBudget', 'categories', 'currency', 'pageTitle', 'eventDates'].forEach(key => localStorage.removeItem(key));
+            
+            // Migrate old per-event users to global user list
+            const oldUsers = JSON.parse(localStorage.getItem('users'));
+            if (oldUsers && oldUsers.length > 0 && allUsers.length === 0) {
+                allUsers = oldUsers.map(u => ({ ...u, password: 'password', role: 'regular' })); // Assign default password/role
+            }
             // alert("Your data has been migrated to the new multi-event format!"); // Muted for better UX
         }
     };
     migrateOldData();
     // --- End Migration ---
 
-    if (events.length === 0 && useMockData && typeof mockTasks !== 'undefined') {
+    const initializeAppData = (usersToAssign) => {
+        // Assign owners from the global user list to mock tasks
+        const owners = usersToAssign.map(u => u.username);
+        mockTasks.forEach((task, index) => {
+            task.owner = owners[index % owners.length];
+        });
+
         const newEvent = {
             id: Date.now(),
             name: 'My First Conference',
             tasks: mockTasks,
             totalBudget: 50000,
             categories: [...new Set(mockTasks.map(t => t.category))],
-            users: [...new Set(mockTasks.map(t => t.owner))].map(name => ({ name, isActive: true })),
             currency: 'USD',
             eventDates: { start: null, end: null }
         };
         events.push(newEvent);
         currentEventId = newEvent.id;
-        saveAppData();
+    };
+
+
+    const initializeDateRangePicker = () => {
+        datePicker = new Litepicker({
+            element: dateRangePickerEl,
+            singleMode: false,
+            format: 'MMM DD, YYYY',
+            tooltipText: {
+                one: 'day',
+                other: 'days'
+            },
+            setup: (picker) => {
+                picker.on('selected', (date1, date2) => {
+                    filterStartDate = date1;
+                    filterEndDate = date2;
+                    renderTasks();
+                });
+            },
+        });
+
+    // Initialize eventDatePicker with its handlers
+        eventDatePicker = new Litepicker({
+            element: eventDateDisplayPickerEl,
+            singleMode: false,
+            format: 'MMM DD, YYYY',
+            lang: currentLanguage,
+            minDate: new Date(),
+            setup: (picker) => {
+                picker.on('selected', (date1, date2) => {
+                    const event = getCurrentEvent();
+                    if (event) {
+                        event.eventDates.start = date1.toJSDate().toISOString();
+                        event.eventDates.end = date2.toJSDate().toISOString();
+                        saveAppData();
+                        updateEventDaysCounter(date1, date2);
+                    }
+                });
+                picker.on('clear', () => {
+                    const event = getCurrentEvent();
+                    if (event) {
+                        event.eventDates.start = null;
+                        event.eventDates.end = null;
+                        saveAppData();
+                        updateEventDaysCounter(null, null);
+                    }
+                });
+            },
+        });
+    };
+
+    function initializeAppUI() {
+        initializeQuill();
+        initializeDateRangePicker();
+        addEventBtn.addEventListener('click', addEvent);
+        syncDataFromCurrentEvent();
+        loadCurrentEvent();
+        updateViewModeButtons(savedViewMode);
+        applyTranslations();
+        setupFilterListeners();
     }
+
+    // Load initial data
+    (async () => {
+        if (allUsers.length === 0) {
+            try {
+                const response = await fetch('settings/usersAndRoles/UsersAndRoles.json');
+                allUsers = await response.json();
+            } catch (e) {
+                console.error("Failed to load initial user data, creating default admin.", e);
+                allUsers.push({ id: Date.now(), username: '1', password: '1', role: 'admin', isActive: true });
+            }
+        }
+
+        if (events.length === 0 && useMockData && typeof mockTasks !== 'undefined') {
+            initializeAppData(allUsers);
+        }
+        
+        // Now that all data is loaded, initialize the app UI
+        initializeAppUI();
+    })();
 
     const getCurrentEvent = () => events.find(e => e.id === currentEventId);
 
@@ -139,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!event) {
             pageTitleEl.textContent = translate('no_event_selected'); // Assuming this key exists
             // Disable most of the UI
-            document.querySelectorAll('button, input, select').forEach(el => {
+            document.querySelectorAll('.main-content-wrapper button, .main-content-wrapper input, .main-content-wrapper select').forEach(el => {
                 if (el.id !== 'manageEventsBtn') el.disabled = true;
             });
             taskBoard.innerHTML = '<p>Please create or select an event from "Manage Events".</p>';
@@ -175,7 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
             tasks = event.tasks;
             totalBudget = event.totalBudget;
             categories = event.categories;
-            users = event.users;
             currency = event.currency;
         } else {
             // Reset data if no event is selected
@@ -200,7 +294,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 tasks: [],
                 totalBudget: 0,
                 categories: ['General', 'Planning', 'Execution'],
-                users: [],
                 currency: 'USD',
                 eventDates: { start: null, end: null }
             };
@@ -275,16 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
         attachmentName.textContent = '';
     };
 
-    const openSettingsModal = () => {
-        renderUserManager();
-        renderCategoryManager();
-        settingsModal.style.display = 'block';
-    };
-
-    const closeSettingsModal = () => {
-        settingsModal.style.display = 'none';
-    };
-
     const saveTasks = () => {
         const event = getCurrentEvent();
         if (event) {
@@ -320,13 +403,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         populateAllCategoryDropdowns();
     }
+    const updateCategories = (newCategories, oldCat = null, newCat = null) => {
+        categories = newCategories;
+        if (oldCat && newCat) {
+            tasks.forEach(task => { if (task.category === oldCat) task.category = newCat; });
+            saveTasks();
+        }
+        saveCategories();
+        renderTasks();
+    }
 
     const saveUsers = () => {
-        const event = getCurrentEvent();
-        if (event) {
-            event.users = users;
-            saveAppData();
-        }
         populateOwnerDropdown();
     }
 
@@ -854,17 +941,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const populateOwnerDropdown = () => {
-        const activeUsers = users.filter(u => u.isActive);
+        const activeUsers = allUsers.filter(u => u.isActive);
         const ownerFilterSelect = document.getElementById('filterOwner');
         ownerFilterSelect.innerHTML = '<option value="">All Owners</option>';
         activeUsers.forEach(user => {
-            ownerFilterSelect.innerHTML += `<option value="${user.name}">${user.name}</option>`;
+            ownerFilterSelect.innerHTML += `<option value="${user.username}">${user.username}</option>`;
         });
     };
 
     const populateTaskOwnerDropdown = () => {
         const ownerSelect = document.getElementById('owner');
-        const activeUsers = users.filter(u => u.isActive);
+        const activeUsers = allUsers.filter(u => u.isActive);
 
         // Preserve current value if editing
         const currentValue = ownerSelect.value;
@@ -872,14 +959,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ownerSelect.innerHTML = '<option value="">-- Select Owner --</option>';
 
         activeUsers.forEach(user => {
-            ownerSelect.innerHTML += `<option value="${user.name}">${user.name}</option>`;
+            ownerSelect.innerHTML += `<option value="${user.username}">${user.username}</option>`;
         });
 
         // If editing a task assigned to a now-inactive user, add them to the list temporarily
-        if (currentValue && !activeUsers.some(u => u.name === currentValue)) {
-            const inactiveUser = users.find(u => u.name === currentValue);
+        if (currentValue && !activeUsers.some(u => u.username === currentValue)) {
+            const inactiveUser = allUsers.find(u => u.username === currentValue);
             if (inactiveUser) {
-                ownerSelect.innerHTML += `<option value="${inactiveUser.name}">${inactiveUser.name} (${translate('inactive')})</option>`;
+                ownerSelect.innerHTML += `<option value="${inactiveUser.username}">${inactiveUser.username} (${translate('inactive')})</option>`;
             }
         }
         ownerSelect.value = currentValue;
@@ -929,24 +1016,7 @@ document.addEventListener('DOMContentLoaded', () => {
         attachmentName.textContent = '';
         openModal();
     });
-    settingsBtn.addEventListener('click', openSettingsModal);
     manageEventsBtn.addEventListener('click', openEventManagerModal);
-    settingsModal.querySelector('.close-button').addEventListener('click', closeSettingsModal);
-    eventManagerModal.querySelector('.close-button').addEventListener('click', closeEventManagerModal);
-
-    closeModalBtn.addEventListener('click', closeModal);
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
-        if (e.target === settingsModal) {
-            closeSettingsModal();
-        }
-        if (e.target === eventManagerModal) {
-            closeEventManagerModal();
-        }
-    });
-
     totalBudgetInput.addEventListener('change', (e) => {
         totalBudget = parseFloat(e.target.value) || 0;
         saveTotalBudget();
@@ -1036,178 +1106,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     taskForm.addEventListener('submit', handleFormSubmit);
 
-    // --- User Management ---
-    const renderUserManager = () => {
-        const list = document.getElementById('userManagerList');
-        list.innerHTML = '';
-        users.forEach((user, index) => {
-            const li = document.createElement('li');
-            li.className = 'category-manager-item';
-            li.innerHTML = `
-                <span>${user.name}</span>
-                <div class="category-manager-actions">
-                    <div class="toggle-switch-container">
-                        <input type="checkbox" id="user-active-${index}" class="toggle-switch user-active-toggle" data-user-name="${user.name}" ${user.isActive ? 'checked' : ''}>
-                        <label for="user-active-${index}" class="slider"></label>
-                    </div>
-                    <button class="edit-user-btn" title="Edit" data-user-name="${user.name}">&#9998;</button>
-                    <button class="delete-user-btn" title="Delete" data-user-name="${user.name}">&times;</button>
-                </div>
-            `;
-            list.appendChild(li);
-        });
-
-        // Add event listeners
-        list.querySelectorAll('.edit-user-btn').forEach(btn => btn.addEventListener('click', editUser));
-        list.querySelectorAll('.delete-user-btn').forEach(btn => btn.addEventListener('click', deleteUser));
-        list.querySelectorAll('.user-active-toggle').forEach(toggle => toggle.addEventListener('change', toggleUserActiveState));
-    };
-
-    const addUser = () => {
-        const newUserName = newUserInput.value.trim();
-        if (newUserName && !users.some(u => u.name === newUserName)) {
-            users.push({ name: newUserName, isActive: true });
-            saveUsers();
-            renderUserManager();
-            newUserInput.value = '';
-        } else if (!newUserName) {
-            alert(translate('user_empty_alert'));
-        } else {
-            alert(translate('user_exists_alert', { user: newUserName }));
-        }
-    };
-
-    const editUser = (e) => {
-        const oldUserName = e.target.dataset.userName;
-        const newUserName = prompt(`Rename user "${oldUserName}":`, oldUserName);
-
-        if (newUserName && newUserName.trim() !== '' && newUserName !== oldUserName) {
-            if (users.some(u => u.name === newUserName)) {
-                alert(translate('user_exists_alert', { user: newUserName }));
-                return;
-            }
-            const user = users.find(u => u.name === oldUserName);
-            if (user) {
-                user.name = newUserName;
-                tasks.forEach(task => {
-                    if (task.owner === oldUserName) {
-                        task.owner = newUserName;
-                    }
-                });
-                saveTasks();
-                saveUsers();
-                renderUserManager();
-                renderTasks();
-            }
-        }
-    };
-
-    const deleteUser = (e) => {
-        const userToDelete = e.target.dataset.userName;
-        const hasActiveTasks = tasks.some(t => t.owner === userToDelete && t.status !== 'Done' && !t.isArchived);
-
-        if (hasActiveTasks) {
-            alert(translate('delete_user_active_alert', { user: userToDelete }));
-            return;
-        }
-
-        if (confirm(translate('delete_user_confirm', { user: userToDelete }))) {
-            users = users.filter(u => u.name !== userToDelete);
-            saveUsers();
-            renderUserManager();
-        }
-    };
-
-    const toggleUserActiveState = (e) => {
-        const userName = e.target.dataset.userName;
-        const user = users.find(u => u.name === userName);
-        if (user) {
-            user.isActive = e.target.checked;
-            saveUsers();
-        }
-    };
-
-    // --- Category Management ---
-    const renderCategoryManager = () => {
-        const list = document.getElementById('categoryManagerList');
-        list.innerHTML = '';
-        categories.forEach(cat => {
-            const li = document.createElement('li');
-            li.className = 'category-manager-item';
-            li.innerHTML = `
-                <span>${cat}</span>
-                <div class="category-manager-actions">
-                    <button class="edit-cat-btn" title="Edit" data-cat="${cat}">&#9998;</button>
-                    <button class="delete-cat-btn" title="Delete" data-cat="${cat}">&times;</button>
-                </div>
-            `;
-            list.appendChild(li);
-        });
-
-        // Add event listeners
-        list.querySelectorAll('.edit-cat-btn').forEach(btn => btn.addEventListener('click', editCategory));
-        list.querySelectorAll('.delete-cat-btn').forEach(btn => btn.addEventListener('click', deleteCategory));
-    };
-
-    const addCategory = () => {
-        const newCat = newCategoryInput.value.trim();
-        if (newCat && !categories.includes(newCat)) {
-            categories.push(newCat);
-            saveCategories();
-            renderCategoryManager();
-            newCategoryInput.value = '';
-        } else if (!newCat) {
-            alert(translate('category_empty_alert'));
-        } else {
-            alert(translate('category_exists_alert', { cat: newCat }));
-        }
-    };
-
-    const editCategory = (e) => {
-        const oldCat = e.target.dataset.cat;
-        const newCat = prompt(`Rename category "${oldCat}":`, oldCat);
-
-        if (newCat && newCat.trim() !== '' && newCat !== oldCat) {
-            if (categories.includes(newCat)) {
-                alert(translate('category_exists_alert', { cat: newCat }));
-                return;
-            }
-            const catIndex = categories.indexOf(oldCat);
-            if (catIndex > -1) {
-                categories[catIndex] = newCat;
-                // Update all tasks with the old category
-                tasks.forEach(task => {
-                    if (task.category === oldCat) {
-                        task.category = newCat;
-                    }
-                });
-                saveTasks();
-                saveCategories();
-                renderCategoryManager();
-                renderTasks();
-            }
-        }
-    };
-
-    const deleteCategory = (e) => {
-        const catToDelete = e.target.dataset.cat;
-        const hasActiveTasks = tasks.some(t => t.category === catToDelete && t.status !== 'Done' && !t.isArchived);
-
-        if (hasActiveTasks) {
-            alert(translate('delete_category_active_alert', { cat: catToDelete }));
-            return;
-        }
-
-        if (confirm(translate('delete_category_confirm', { cat: catToDelete }))) {
-            tasks.forEach(task => { if (task.category === catToDelete) task.category = 'Other'; });
-            categories = categories.filter(c => c !== catToDelete);
-            saveTasks();
-            saveCategories();
-            renderCategoryManager();
-            renderTasks();
-        }
-    };
-
     const updateEventDaysCounter = (date1 = null, date2 = null) => {
         const event = getCurrentEvent();
         if (!event) return;
@@ -1268,57 +1166,88 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const initializeDateRangePicker = () => {
-        datePicker = new Litepicker({
-            element: dateRangePickerEl,
-            singleMode: false,
-            format: 'MMM DD, YYYY',
-            tooltipText: {
-                one: 'day',
-                other: 'days'
-            },
-            setup: (picker) => {
-                picker.on('selected', (date1, date2) => {
-                    filterStartDate = date1;
-                    filterEndDate = date2;
-                    renderTasks();
-                });
-            },
-        });
+    
+    // --- Settings Modal & Tabs ---
+    const openSettingsModal = () => {
+        // Show/hide users tab based on role
+        const usersTab = document.getElementById('usersTab');
+        if (loggedInUser.role === 'admin') {
+            usersTab.style.display = 'block';
+        } else {
+            usersTab.style.display = 'none';
+        }
+        settingsModal.style.display = 'block';
+        openTab(null, 'general'); // Open general tab by default
+    };
+    
+    const openTab = (evt, tabName) => {
+        // Get all elements with class="tab-content" and hide them
+        const tabcontent = settingsModal.getElementsByClassName("tab-content");
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+            tabcontent[i].classList.remove("active");
+        }
 
-        eventDatePicker = new Litepicker({
-            element: eventDateDisplayPickerEl,
-            singleMode: false,
-            format: 'MMM DD, YYYY',
-            lang: currentLanguage,
-            minDate: new Date(),
-            setup: (picker) => {
-                picker.on('selected', (date1, date2) => {
-                    const event = getCurrentEvent();
-                    if (event) {
-                        event.eventDates.start = date1.toJSDate().toISOString();
-                        event.eventDates.end = date2.toJSDate().toISOString();
-                        saveAppData();
-                        updateEventDaysCounter(date1, date2);
-                    }
+        // Get all elements with class="tab-link" and remove the class "active"
+        const tablinks = settingsModal.getElementsByClassName("tab-link");
+        for (let i = 0; i < tablinks.length; i++) {
+            tablinks[i].classList.remove("active");
+        }
+
+        // Show the current tab, and add an "active" class to the button that opened the tab
+        const currentTab = document.getElementById(tabName);
+        currentTab.style.display = "block";
+        currentTab.classList.add("active");
+        if (evt) evt.currentTarget.classList.add("active");
+        else settingsModal.querySelector(`[data-tab="${tabName}"]`).classList.add("active");
+
+        // Load content for tabs dynamically, only if not already loaded
+        if (tabName === 'users' && !currentTab.dataset.loaded) {
+            fetch('settings/usersAndRoles/usersAndRoles.html')
+                .then(response => response.text())
+                .then(html => {
+                    currentTab.innerHTML = html;
+                    currentTab.dataset.loaded = 'true';
+                    initializeUserManagement({ getUsers: () => allUsers, updateUsers: (newUsers) => { allUsers = newUsers; saveAppData(); } }, translate);
                 });
-                picker.on('clear', () => {
-                    const event = getCurrentEvent();
-                    if (event) {
-                        event.eventDates.start = null;
-                        event.eventDates.end = null;
-                        saveAppData();
-                        updateEventDaysCounter(null, null);
-                    }
+        }
+        if (tabName === 'categories' && !currentTab.dataset.loaded) {
+            fetch('settings/categories.html')
+                .then(response => response.text())
+                .then(html => {
+                    currentTab.innerHTML = html;
+                    currentTab.dataset.loaded = 'true';
+                    initializeCategoryManagement({ getCategories: () => categories, updateCategories, getTasks: () => tasks }, translate);
                 });
-            },
-        });
+        }
     };
 
-    // Attach listeners now that all functions are defined
-    addUserBtn.addEventListener('click', addUser);
-    addCategoryBtn.addEventListener('click', addCategory);
-    addEventBtn.addEventListener('click', addEvent);
+        const closeSettingsModal = () => {
+        settingsModal.style.display = 'none';
+    };
+
+    // Setup Modal Listeners
+    settingsBtn.addEventListener('click', openSettingsModal);
+    settingsModal.querySelectorAll('.tab-link').forEach(button => {
+        button.addEventListener('click', (e) => openTab(e, e.target.dataset.tab));
+    });
+
+    // Centralized Modal Event Listeners
+    settingsModal.querySelector('.close-button').addEventListener('click', closeSettingsModal);
+    eventManagerModal.querySelector('.close-button').addEventListener('click', closeEventManagerModal);
+    closeModalBtn.addEventListener('click', closeModal);
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+        if (e.target === settingsModal) {
+            closeSettingsModal();
+        }
+        if (e.target === eventManagerModal) {
+            closeEventManagerModal();
+        }
+    });
 
     // Initial View Mode Setup
     const savedViewMode = localStorage.getItem('viewMode') || 'kanban';
@@ -1333,11 +1262,4 @@ document.addEventListener('DOMContentLoaded', () => {
         languageToggle.checked = true;
         document.body.classList.add('rtl');
     }
-
-    initializeQuill();
-    initializeDateRangePicker();
-    syncDataFromCurrentEvent();
-    loadCurrentEvent();
-    updateViewModeButtons(savedViewMode);
-    applyTranslations();
 });
