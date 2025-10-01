@@ -1,0 +1,94 @@
+body {
+    background-color: var(--color-background);
+}
+
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+}
+
+.admin-container h1 {
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-xl);
+}
+
+.admin-section {
+    background-color: var(--color-surface);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-section h2 {
+    margin-top: 0;
+    color: var(--color-text-primary);
+}
+
+.add-user-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    align-items: center;
+}
+
+.add-user-form .btn {
+    padding: 8px 12px;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+#usersTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--spacing-md);
+}
+
+#usersTable th,
+#usersTable td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-secondary);
+}
+
+#usersTable th {
+    background-color: var(--color-background);
+}
+
+#usersTable tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+#usersTable .user-role-select,
+#usersTable .user-group-select {
+    width: 150px;
+}
+
+#usersTable .delete-user-btn {
+    background: none;
+    border: none;
+    color: var(--color-danger);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* Re-use some styles from main app for consistency */
+.category-manager-list {
+    max-height: 300px;
+}
+
+@media (max-width: 900px) {
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+}

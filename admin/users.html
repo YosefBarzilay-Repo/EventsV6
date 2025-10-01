@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - User Management</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="users.css">
+</head>
+<body>
+    <header class="global-header">
+        <div class="global-header-left">
+            <div class="app-logo"></div>
+            <h2>EventsV6 (Admin Panel)</h2>
+        </div>
+        <div class="header-right">
+            <a href="../index.html" class="btn" data-translate-key="back_to_app">Back to App</a>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <h1 data-translate-key="user_management">User Management</h1>
+
+        <div class="admin-grid">
+            <!-- User Management Section -->
+            <div class="admin-section">
+                <h2 data-translate-key="manage_users">Manage Users</h2>
+                <div class="add-user-form">
+                    <input type="text" id="newUsernameInput" class="filter-input" placeholder="Username" autocomplete="off">
+                    <input type="password" id="newUserPasswordInput" class="filter-input" placeholder="Password" autocomplete="off">
+                    <select id="newUserRoleSelect" class="filter-input">
+                        <option value="regular">Regular</option>
+                        <option value="beta">Beta</option>
+                        <option value="operations">Operations Manager</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <select id="newUserGroupSelect" class="filter-input">
+                        <!-- Groups will be populated here -->
+                    </select>
+                    <button id="addUserBtn" class="btn btn-primary" data-translate-key="add">Add</button>
+                </div>
+                <div class="table-container">
+                    <table id="usersTable">
+                        <thead>
+                            <tr>
+                                <th data-translate-key="username">Username</th>
+                                <th data-translate-key="role">Role</th>
+                                <th data-translate-key="group">Group</th>
+                                <th data-translate-key="active">Active</th>
+                                <th data-translate-key="actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- User rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Group Management Section -->
+            <div class="admin-section">
+                <h2 data-translate-key="manage_groups">Manage Groups</h2>
+                <div class="add-category-form">
+                    <input type="text" id="newGroupInput" class="filter-input" data-translate-placeholder="new_group_placeholder" placeholder="New group name...">
+                    <button id="addGroupBtn" class="btn btn-primary" data-translate-key="add">Add</button>
+                </div>
+                <ul id="groupManagerList" class="category-manager-list">
+                    <!-- Group items will be inserted here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="../translations.js"></script>
+    <script src="users.js"></script>
+</body>
+</html>

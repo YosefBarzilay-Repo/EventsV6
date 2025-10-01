@@ -4,6 +4,7 @@ const translations = {
         'set_event_dates': 'Set Event Dates',
         'manage_events': 'Manage Events',
         'settings': 'Settings',
+        'admin_panel': 'Admin Panel',
         'add_new_task': 'Add New Task',
         'logout': 'Logout',
         // Widgets
@@ -60,6 +61,12 @@ const translations = {
         'new_category_placeholder': 'New category name...',
         'add': 'Add',
         'manage_users': 'Manage Users',
+        'username': 'Username',
+        'role': 'Role',
+        'group': 'Group',
+        'active': 'Active',
+        'actions': 'Actions',
+        'back_to_app': 'Back to App',
         'new_user_placeholder': 'New user name...',
         // Event Manager Modal
         'your_events': 'Your Events',
@@ -76,6 +83,7 @@ const translations = {
         'create_event': 'Create Event',
         // JS Alerts & Prompts
         'past_due_date_alert': 'Due date cannot be in the past. Please select today or a future date.',
+        'access_denied_alert': 'Access Denied. You must be an administrator to view this page.',
         'category_empty_alert': 'Category name cannot be empty.',
         'category_exists_alert': 'Category "{cat}" already exists.',
         'rename_category_prompt': 'Rename category "{cat}":',
@@ -87,11 +95,16 @@ const translations = {
         'delete_last_admin_alert': 'Cannot delete the last administrator.',
         'remove_last_admin_role_alert': 'Cannot remove the last administrator role.',
         'grand_total_budget': 'Grand Total Budget',
+        'manage_groups': 'Manage Groups',
+        'new_group_placeholder': 'New group name...',
+        'rename_group_prompt': 'Rename group "{group}":',
+        'delete_group_confirm': 'Are you sure you want to delete the group "{group}"? Users in this group will be moved to the "Default" group.',
         'save_changes': 'Save Changes',
         'delete_user_confirm': 'Are you sure you want to delete the user "{user}"?',
     },
     he: {
         // Header
+        'admin_panel': 'פאנל ניהול',
         'set_event_dates': 'הגדר תאריכי אירוע',
         'manage_events': 'ניהול אירועים',
         'settings': 'הגדרות',
@@ -154,6 +167,12 @@ const translations = {
         'new_category_placeholder': 'שם קטגוריה חדשה...',
         'add': 'הוסף',
         'manage_users': 'ניהול משתמשים',
+        'username': 'שם משתמש',
+        'role': 'תפקיד',
+        'group': 'קבוצה',
+        'active': 'פעיל',
+        'actions': 'פעולות',
+        'back_to_app': 'חזרה לאפליקציה',
         'new_user_placeholder': 'שם משתמש חדש...',
         // Event Manager Modal
         'your_events': 'האירועים שלך',
@@ -170,6 +189,7 @@ const translations = {
         'create_event': 'צור אירוע',
         // JS Alerts & Prompts
         'past_due_date_alert': 'תאריך יעד לא יכול להיות בעבר. אנא בחר תאריך מהיום והלאה.',
+        'access_denied_alert': 'הגישה נדחתה. עליך להיות מנהל מערכת כדי לצפות בדף זה.',
         'category_empty_alert': 'שם קטגוריה לא יכול להיות ריק.',
         'category_exists_alert': 'הקטגוריה "{cat}" כבר קיימת.',
         'rename_category_prompt': 'שנה שם קטגוריה "{cat}":',
@@ -181,6 +201,10 @@ const translations = {
         'delete_last_admin_alert': 'לא ניתן למחוק את המנהל האחרון.',
         'remove_last_admin_role_alert': 'לא ניתן להסיר את תפקיד המנהל האחרון.',
         'grand_total_budget': 'תקציב כולל כללי',
+        'manage_groups': 'נהל קבוצות',
+        'new_group_placeholder': 'שם קבוצה חדש...',
+        'rename_group_prompt': 'שנה שם קבוצה "{group}":',
+        'delete_group_confirm': 'האם אתה בטוח שברצונך למחוק את הקבוצה "{group}"? משתמשים בקבוצה זו יועברו לקבוצת "Default".',
         'save_changes': 'שמור שינויים',
         'delete_user_confirm': 'האם אתה בטוח שברצונך למחוק את המשתמש "{user}"?',
         // Statuses

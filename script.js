@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsBtn = document.getElementById('settingsBtn');
     const manageEventsBtn = document.getElementById('manageEventsBtn');
     const logoutBtn = document.getElementById('logoutBtn');
+    const adminPanelBtn = document.getElementById('adminPanelBtn');
     const eventManagerModal = document.getElementById('eventManagerModal');
     const modal = document.getElementById('taskModal');
     const createEventModal = document.getElementById('createEventModal');
@@ -96,6 +97,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     };
 
+    // Show admin-only UI elements
+    if (loggedInUser.role === 'admin') {
+        adminPanelBtn.style.display = 'inline-block';
+        adminPanelBtn.addEventListener('click', () => { window.location.href = 'admin/users.html'; });
+    }
+
+
     const showLoader = () => {
         loadingOverlay.style.display = 'flex';
     };
@@ -113,6 +121,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveAppData = () => {
         appData = { events, currentEventId, allUsers }; // Now also saves the user list
         localStorage.setItem('appData', JSON.stringify(appData));
+    };
+
+    let tasks, totalBudget, categories, users, currency;
+
+    const syncDataFromCurrentEvent = () => {
+        const event = getCurrentEvent();
+        if (event) {
+            tasks = event.tasks;
+            totalBudget = event.totalBudget;
+            categories = event.categories;
+            currency = event.currency;
+            // allUsers is global, but let's ensure it's not undefined
+            allUsers = appData.allUsers || [];
+        } else {
+            // Reset data if no event is selected
+            tasks = []; totalBudget = 0; categories = []; currency = 'USD';
+            allUsers = appData.allUsers || [];
+        }
     };
 
     // --- Data Migration for existing users ---
@@ -320,24 +346,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTasks();
         updateEventDaysCounter();
         updateBudgetSummary();
-    };
-
-    let tasks, totalBudget, categories, users, currency;
-
-    const syncDataFromCurrentEvent = () => {
-        const event = getCurrentEvent();
-        if (event) {
-            tasks = event.tasks;
-            totalBudget = event.totalBudget;
-            categories = event.categories;
-            currency = event.currency;
-            // allUsers is global, but let's ensure it's not undefined
-            allUsers = appData.allUsers || [];
-        } else {
-            // Reset data if no event is selected
-            tasks = []; totalBudget = 0; categories = []; currency = 'USD';
-            allUsers = appData.allUsers || [];
-        }
     };
 
     const formatEventListDate = (event) => {
