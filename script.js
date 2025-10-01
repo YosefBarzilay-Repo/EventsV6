@@ -835,7 +835,10 @@ document.addEventListener('DOMContentLoaded', () => {
         taskBoard.innerHTML = '';
         taskBoard.className = 'task-board budget-view-active'; // Set class for styling
 
-        const budgetTasks = tasks.filter(task => parseFloat(task.budget) > 0 && !task.isArchived);
+        // First, get all tasks that match the current filters.
+        const filteredTasks = applyFilters();
+        // Then, from that list, get only the ones that have a budget.
+        const budgetTasks = filteredTasks.filter(task => parseFloat(task.budget) > 0);
 
         if (budgetTasks.length === 0) {
             taskBoard.innerHTML = `
