@@ -286,14 +286,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const loadCurrentEvent = () => {
         // If user is an operations manager, show the operations view instead.
-        if ((loggedInUser.role === 'operations' || loggedInUser.role === 'admin') && (localStorage.getItem('viewMode') === 'operations')) {
-            renderOperationsView();
-            // Hide elements not relevant to operations view
-            document.getElementById('budget-summary').style.display = 'none';
-            return;
-        }
+        // The logic to hide/show header/widgets is now in renderTasks()
 
         const event = getCurrentEvent();
+
         if (!event) {
             pageTitleEl.textContent = translate('no_event_selected'); // Assuming this key exists
             // Disable most of the UI
@@ -305,7 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Re-enable UI
-        document.getElementById('budget-summary').style.display = 'grid';
         document.querySelectorAll('button, input, select').forEach(el => el.disabled = false);
 
         pageTitleEl.textContent = event.name;
@@ -993,8 +988,19 @@ document.addEventListener('DOMContentLoaded', () => {
             loadCurrentEvent(); // This will show the "No event" message
             return;
         }
+
         taskBoard.innerHTML = '';
         const viewMode = localStorage.getItem('viewMode') || 'kanban';
+
+        // Centralized logic to control UI visibility based on view
+        if (viewMode === 'operations') {
+            document.getElementById('budget-summary').style.display = 'none';
+            document.querySelector('.event-header').style.display = 'none';
+        } else {
+            document.getElementById('budget-summary').style.display = 'grid';
+            document.querySelector('.event-header').style.display = 'block';
+        }
+
         if (viewMode === 'archive') {
             renderArchiveView();
         } else if (viewMode === 'budget') {
