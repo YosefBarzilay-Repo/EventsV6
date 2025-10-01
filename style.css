@@ -262,6 +262,9 @@ body {
     grid-template-columns: repeat(4, 320px) !important;
     justify-content: center;
     gap: 20px;
+    background-color: #ffffff;
+    padding: 20px;
+    border: 1px solid #E6D8C3;
 }
 
 /* --- Budget View Styles --- */

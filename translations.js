@@ -5,6 +5,7 @@ const translations = {
         'manage_events': 'Manage Events',
         'settings': 'Settings',
         'add_new_task': 'Add New Task',
+        'logout': 'Logout',
         // Widgets
         'remaining_budget': 'Remaining Budget',
         'open_tasks': 'Open Tasks',
@@ -77,6 +78,7 @@ const translations = {
         'manage_events': 'ניהול אירועים',
         'settings': 'הגדרות',
         'add_new_task': 'הוסף משימה חדשה',
+        'logout': 'התנתק',
         // Widgets
         'remaining_budget': 'תקציב נותר',
         'open_tasks': 'משימות פתוחות',

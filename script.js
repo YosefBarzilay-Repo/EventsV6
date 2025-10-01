@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const newTaskBtn = document.getElementById('newTaskBtn');
     const settingsBtn = document.getElementById('settingsBtn');
     const manageEventsBtn = document.getElementById('manageEventsBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     const eventManagerModal = document.getElementById('eventManagerModal');
     const modal = document.getElementById('taskModal');
     const settingsModal = document.getElementById('settingsModal');
@@ -493,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderKanbanView = () => {
         const statuses = ["Open", "In Progress", "Block", "Done"];
-        taskBoard.className = 'task-board';
+        taskBoard.className = 'task-board'; // Reset to base class
 
         const filteredTasks = applyFilters();
 
@@ -1017,6 +1018,13 @@ document.addEventListener('DOMContentLoaded', () => {
         openModal();
     });
     manageEventsBtn.addEventListener('click', openEventManagerModal);
+
+    logoutBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('loggedInUser');
+        window.location.href = 'login/login.html';
+    });
+
     totalBudgetInput.addEventListener('change', (e) => {
         totalBudget = parseFloat(e.target.value) || 0;
         saveTotalBudget();
