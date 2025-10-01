@@ -8,10 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const newTaskBtn = document.getElementById('newTaskBtn');
-    const settingsBtn = document.getElementById('settingsBtn');
     const manageEventsBtn = document.getElementById('manageEventsBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const adminPanelBtn = document.getElementById('adminPanelBtn');
+    const menuBtn = document.getElementById('menuBtn');
+    const settingsDropdown = document.getElementById('settingsDropdown');
     const eventManagerModal = document.getElementById('eventManagerModal');
     const modal = document.getElementById('taskModal');
     const createEventModal = document.getElementById('createEventModal');
@@ -98,9 +97,20 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Show admin-only UI elements
+    const adminPanelMenuItem = document.getElementById('adminPanelMenuItem');
+    const adminPanelDivider = document.getElementById('adminPanelDivider');
     if (loggedInUser.role === 'admin') {
-        adminPanelBtn.style.display = 'inline-block';
-        adminPanelBtn.addEventListener('click', () => { window.location.href = 'admin/users.html'; });
+        adminPanelMenuItem.style.display = 'block';
+        adminPanelDivider.style.display = 'block';
+        adminPanelMenuItem.addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'admin/users.html'; });
+    }
+
+    // Show "Users & Roles" menu item based on role
+    const usersDropdownItem = document.getElementById('usersDropdownItem');
+    if (loggedInUser.role === 'admin' || loggedInUser.role === 'operations') {
+        usersDropdownItem.style.display = 'block';
+    } else {
+        usersDropdownItem.style.display = 'none';
     }
 
 
@@ -357,6 +367,50 @@ document.addEventListener('DOMContentLoaded', () => {
         const start = formatter(event.eventDates.start);
         const end = event.eventDates.end ? formatter(event.eventDates.end) : start;
         return start === end ? start : `${start} - ${end}`;
+    };
+
+    const updateEventDaysCounter = (date1 = null, date2 = null) => {
+        const event = getCurrentEvent();
+        if (!event) return;
+
+        // If dates are passed directly (from picker events), use them. Otherwise, try to get from picker.
+        const start = date1 ? date1.dateInstance : (event.eventDates.start ? new Date(event.eventDates.start) : null);
+        const end = date2 ? date2.dateInstance : (event.eventDates.end ? new Date(event.eventDates.end) : null);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (start) {
+            const startDateInstance = new Date(start);
+            startDateInstance.setHours(0, 0, 0, 0);
+
+            if (today < startDateInstance) {
+                // Event is in the future
+                eventDaysLabelEl.textContent = translate('days_to_event');
+                const diffTime = startDateInstance.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                eventDaysCountEl.textContent = diffDays;
+                daysProgressBar.style.width = '0%'; // Event has not started
+            } else if (end && today <= new Date(end)) {
+                // Event is currently in progress
+                eventDaysLabelEl.textContent = translate('event_status');
+                eventDaysCountEl.textContent = translate('in_progress');
+                // The event has started, so progress to the event is 100%
+                daysProgressBar.style.width = '100%';
+            } else {
+                // Event is finished
+                eventDaysLabelEl.textContent = translate('event_status');
+                eventDaysCountEl.textContent = translate('finished');
+                // The event has started and finished, so progress to the event is 100%
+                daysProgressBar.style.width = '100%';
+            }
+            daysProgressBar.classList.add('progress-green'); // Or other logic you prefer
+        } else {
+            // No date set
+            eventDaysLabelEl.textContent = translate('event_days');
+            eventDaysCountEl.textContent = 'N/A';
+            daysProgressBar.style.width = '0%';
+        }
     };
 
     const renderEventManager = () => {
@@ -1327,12 +1381,6 @@ document.addEventListener('DOMContentLoaded', () => {
     manageEventsBtn.addEventListener('click', openEventManagerModal);
     openCreateEventModalBtn.addEventListener('click', openCreateEventModal);
 
-    logoutBtn.addEventListener('click', () => {
-        sessionStorage.removeItem('isLoggedIn');
-        sessionStorage.removeItem('loggedInUser');
-        window.location.href = 'login/login.html';
-    });
-
     totalBudgetInput.addEventListener('change', (e) => {
         totalBudget = parseFloat(e.target.value) || 0;
         saveTotalBudget();
@@ -1429,85 +1477,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('createEventForm').addEventListener('submit', (e) => { e.preventDefault(); addEvent(); });
 
-    const updateEventDaysCounter = (date1 = null, date2 = null) => {
-        const event = getCurrentEvent();
-        if (!event) return;
-
-        // If dates are passed directly (from picker events), use them. Otherwise, try to get from picker.
-        const start = date1 ? date1.dateInstance : (event.eventDates.start ? new Date(event.eventDates.start) : null);
-        const end = date2 ? date2.dateInstance : (event.eventDates.end ? new Date(event.eventDates.end) : null);
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (start) {
-            const startDateInstance = new Date(start);
-            startDateInstance.setHours(0, 0, 0, 0);
-
-            if (today < startDateInstance) {
-                // Event is in the future
-                eventDaysLabelEl.textContent = translate('days_to_event');
-                const diffTime = startDateInstance.getTime() - today.getTime();
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                eventDaysCountEl.textContent = diffDays;
-                daysProgressBar.style.width = '0%'; // Event has not started
-            } else if (end && today <= new Date(end)) {
-                // Event is currently in progress
-                eventDaysLabelEl.textContent = translate('event_status');
-                eventDaysCountEl.textContent = translate('in_progress');
-                // The event has started, so progress to the event is 100%
-                daysProgressBar.style.width = '100%';
-            } else {
-                // Event is finished
-                eventDaysLabelEl.textContent = translate('event_status');
-                eventDaysCountEl.textContent = translate('finished');
-                // The event has started and finished, so progress to the event is 100%
-                daysProgressBar.style.width = '100%';
-            }
-            daysProgressBar.classList.add('progress-green'); // Or other logic you prefer
-        } else {
-            // No date set
-            eventDaysLabelEl.textContent = translate('event_days');
-            eventDaysCountEl.textContent = 'N/A';
-            daysProgressBar.style.width = '0%';
-        }
-    };
-
 
     // --- Settings Modal & Tabs ---
     const openSettingsModal = () => {
-        // Show/hide users tab based on role
-        const usersTab = document.getElementById('usersTab');
-        if (loggedInUser.role === 'admin' || loggedInUser.role === 'operations') {
-            usersTab.style.display = 'block';
-        } else {
-            usersTab.style.display = 'none';
-        }
         document.body.classList.add('modal-open');
         settingsModal.style.display = 'block';
         openTab(null, 'general'); // Open general tab by default
     };
 
     const openTab = (evt, tabName) => {
-        // Get all elements with class="tab-content" and hide them
+        // Hide all tab content
         const tabcontent = settingsModal.getElementsByClassName("tab-content");
         for (let i = 0; i < tabcontent.length; i++) {
             tabcontent[i].style.display = "none";
             tabcontent[i].classList.remove("active");
         }
 
-        // Get all elements with class="tab-link" and remove the class "active"
-        const tablinks = settingsModal.getElementsByClassName("tab-link");
-        for (let i = 0; i < tablinks.length; i++) {
-            tablinks[i].classList.remove("active");
-        }
-
-        // Show the current tab, and add an "active" class to the button that opened the tab
+        // Show the current tab
         const currentTab = document.getElementById(tabName);
         currentTab.style.display = "block";
         currentTab.classList.add("active");
-        if (evt) evt.currentTarget.classList.add("active");
-        else settingsModal.querySelector(`[data-tab="${tabName}"]`).classList.add("active");
 
         // Load content for tabs dynamically, only if not already loaded
         if (tabName === 'users' && !currentTab.dataset.loaded) {
@@ -1536,10 +1525,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Setup Modal Listeners
-    settingsBtn.addEventListener('click', openSettingsModal);
-    settingsModal.querySelectorAll('.tab-link').forEach(button => {
-        button.addEventListener('click', (e) => openTab(e, e.target.dataset.tab));
-    });
 
     // Centralized Modal Event Listeners
     settingsModal.querySelector('.close-button').addEventListener('click', closeSettingsModal);
@@ -1548,6 +1533,11 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModalBtn.addEventListener('click', closeModal);
 
     window.addEventListener('click', (e) => {
+        // Close dropdown if clicked outside
+        if (!menuBtn.contains(e.target) && !settingsDropdown.contains(e.target)) {
+            settingsDropdown.style.display = 'none';
+        }
+
         if (e.target === modal) {
             closeModal();
         }
@@ -1563,6 +1553,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     taskForm.addEventListener('submit', handleFormSubmit);
+
+    // --- New Dropdown Menu Logic ---
+    menuBtn.addEventListener('click', () => {
+        settingsDropdown.style.display = settingsDropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    settingsDropdown.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (e.target.classList.contains('dropdown-item')) {
+            // Don't do anything for the admin panel link, its own listener will handle it.
+            if (e.target.id === 'adminPanelMenuItem') return;
+            const tab = e.target.dataset.tab;
+            if (!tab) return; // This handles the logout link
+            openSettingsModal();
+            openTab(null, tab);
+            settingsDropdown.style.display = 'none'; // Close menu after selection
+        }
+    });
 
     // Initial View Mode Setup
     let savedViewMode = localStorage.getItem('viewMode') || 'kanban';
@@ -1581,4 +1589,11 @@ document.addEventListener('DOMContentLoaded', () => {
         languageToggle.checked = true;
         document.body.classList.add('rtl');
     }
+
+    // Move logout listener to the new menu item
+    document.getElementById('logoutMenuItem').addEventListener('click', () => {
+        sessionStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('loggedInUser');
+        window.location.href = 'login/login.html';
+    });
 });

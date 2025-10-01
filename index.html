@@ -17,11 +17,20 @@
             <h2>EventsV6 (Beta)</h2>
         </div>
         <div class="header-right">
-            <button id="adminPanelBtn" class="btn" data-translate-key="admin_panel" style="display: none;">Admin Panel</button>
             <button id="newTaskBtn" class="btn btn-primary" data-translate-key="add_new_task">Add New Task</button>
             <button id="manageEventsBtn" class="btn" data-translate-key="manage_events">Manage Events</button>
-            <button id="settingsBtn" class="btn icon-btn" data-translate-title="settings" title="Settings">&#9881;</button>
-            <button id="logoutBtn" class="btn icon-btn" data-translate-title="logout" title="Logout">&#10162;</button>
+            <div class="dropdown">
+                <button id="menuBtn" class="btn icon-btn" data-translate-title="settings" title="Settings">&#9776;</button>
+                <div id="settingsDropdown" class="dropdown-menu">
+                    <a href="#" id="adminPanelMenuItem" class="dropdown-item" style="display: none;" data-translate-key="admin_panel">Admin Panel</a>
+                    <div id="adminPanelDivider" class="dropdown-divider" style="display: none;"></div>
+                    <a href="#" class="dropdown-item" data-tab="general" data-translate-key="general">General</a>
+                    <a href="#" class="dropdown-item" data-tab="categories" data-translate-key="categories">Categories</a>
+                    <a href="#" class="dropdown-item" id="usersDropdownItem" data-tab="users" style="display: none;" data-translate-key="manage_users">Users & Roles</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" id="logoutMenuItem" class="dropdown-item" data-translate-key="logout">Logout</a>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -167,11 +176,6 @@
             <span class="close-button">&times;</span>
             <h2 data-translate-key="settings">Settings</h2>
             <div class="tab-container">
-                <div class="tab-header">
-                    <button class="tab-link active" data-tab="general">General</button>
-                    <button class="tab-link" data-tab="categories">Categories</button>
-                    <button class="tab-link" data-tab="users" id="usersTab" style="display: none;">Users & Roles</button>
-                </div>
                 <div id="general" class="tab-content active">
                     <div class="settings-form">
                         <div class="setting-item">
