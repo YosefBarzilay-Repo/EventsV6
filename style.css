@@ -37,47 +37,63 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+.global-header {
+    background-color: var(--color-surface);
+    padding: 0 var(--spacing-lg);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--color-secondary);
+    position: sticky;
+    top: 0;
+    z-index: 900;
+}
+
+.global-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.app-logo {
+    width: 32px;
+    height: 32px;
+    background-color: var(--color-primary);
+    border-radius: var(--radius-sm);
+    /* In a real app, this would be an <img> or SVG */
+}
+
+.global-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--color-text-primary);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
 .app-container {
     margin: 0 auto;
     padding: var(--spacing-lg);
 }
 
 .main-content-wrapper {
-    max-width: 1340px;
-    /* (4 * 320px for columns) + (3 * 20px for gaps) */
+    max-width: 1340px; /* (4 * 320px for columns) + (3 * 20px for gaps) */
     margin: 0 auto;
 }
 
-.app-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.event-header {
     margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-lg);
-    border-bottom: 1px solid var(--color-secondary);
 }
 
-.app-header h1 {
+.event-header h1 {
     margin: 0;
     font-size: 24px;
     color: #3D405B;
-}
-
-.app-header h1[contenteditable="true"] {
-    cursor: text;
-    padding: 0 8px;
-}
-
-.app-header h1[contenteditable="true"]:focus {
-    background-color: #fff;
-    outline: 2px solid var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(93, 134, 108, .25);
-}
-
-.header-controls {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
 }
 
 .header-event-date {

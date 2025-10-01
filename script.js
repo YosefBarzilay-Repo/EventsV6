@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterOwnerInput = document.getElementById('filterOwner');
     const dateRangePickerEl = document.getElementById('dateRangePicker');
     const currencySelect = document.getElementById('currencySelect');
+    const viewArchiveBtn = document.getElementById('viewArchiveBtn');
     const newEventNameInput = document.getElementById('newEventNameInput');
     const newEventOwnerInput = document.getElementById('newEventOwnerInput');
     const newEventContactNumberInput = document.getElementById('newEventContactNumberInput');
@@ -55,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addEventBtn = document.getElementById('addEventBtn');
     const editEventIdInput = document.getElementById('editEventId');
     const headerEventDateDisplay = document.getElementById('headerEventDateDisplay');
+    const currentViewNameEl = document.getElementById('currentViewName');
     const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
     // --- Mock Data Control Flag ---
@@ -285,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const loadCurrentEvent = () => {
         // If user is an operations manager, show the operations view instead.
-        if (loggedInUser.role === 'operations' && (localStorage.getItem('viewMode') === 'operations')) {
+        if ((loggedInUser.role === 'operations' || loggedInUser.role === 'admin') && (localStorage.getItem('viewMode') === 'operations')) {
             renderOperationsView();
             // Hide elements not relevant to operations view
             document.getElementById('budget-summary').style.display = 'none';
@@ -1380,14 +1382,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    viewArchiveBtn.addEventListener('click', (e) => {
+        const newViewMode = e.target.dataset.view;
+        localStorage.setItem('viewMode', newViewMode);
+        updateViewModeButtons(newViewMode);
+        renderTasks();
+        closeSettingsModal();
+    });
     const updateViewModeButtons = (activeView) => {
         viewModeGroup.querySelectorAll('button').forEach(button => {
             button.classList.toggle('active', button.dataset.view === activeView);
         });
+
+        // Update the main header view title
+        const activeBtn = viewModeGroup.querySelector(`[data-view="${activeView}"]`);
+        const viewKey = activeBtn ? activeBtn.dataset.translateKey : (activeView === 'archive' ? 'archive' : 'kanban');
+        currentViewNameEl.textContent = translate(viewKey);
+        currentViewNameEl.dataset.translateKey = viewKey;
+
         // Show/hide operations button based on role
         const opsButton = viewModeGroup.querySelector('[data-view="operations"]');
         if (opsButton) {
-            opsButton.style.display = (loggedInUser.role === 'operations') ? 'inline-block' : 'none';
+            opsButton.style.display = (loggedInUser.role === 'operations' || loggedInUser.role === 'admin') ? 'inline-block' : 'none';
         }
 
     };
@@ -1443,10 +1459,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openSettingsModal = () => {
         // Show/hide users tab based on role
         const usersTab = document.getElementById('usersTab');
-        if (loggedInUser.role === 'admin') {
-            usersTab.style.display = 'block';
-        } else if (loggedInUser.role === 'operations') {
-            // Operations can also see users, but maybe not edit? For now, let's allow it.
+        if (loggedInUser.role === 'admin' || loggedInUser.role === 'operations') {
             usersTab.style.display = 'block';
         } else {
             usersTab.style.display = 'none';

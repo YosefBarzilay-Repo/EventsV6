@@ -11,23 +11,28 @@
 </head>
 <body>
 
+    <header class="global-header">
+        <div class="global-header-left">
+            <div class="app-logo"></div>
+            <h2 id="currentViewName"></h2>
+        </div>
+        <div class="header-right">
+            <button id="manageEventsBtn" class="btn" data-translate-key="manage_events">Manage Events</button>
+            <button id="settingsBtn" class="btn icon-btn" data-translate-title="settings" title="Settings">&#9881;</button>
+            <button id="logoutBtn" class="btn icon-btn" data-translate-title="logout" title="Logout">&#10162;</button>
+            <button id="newTaskBtn" class="btn btn-primary" data-translate-key="add_new_task">Add New Task</button>
+        </div>
+    </header>
+
     <div class="app-container">
         <div id="loading-overlay" class="loading-spinner" style="display: none;">
             <div class="spinner"></div>
         </div>
         <div class="main-content-wrapper">
-            <header class="app-header">
-                <div class="header-left">
-                    <h1 id="pageTitle">Untitled Event Name</h1>
-                    <div id="headerEventDateDisplay" class="header-event-date" data-translate-key="no_date_set">
-                        No dates set
-                    </div>
-                </div>
-                <div class="header-right">
-                    <button id="manageEventsBtn" class="btn" data-translate-key="manage_events">Manage Events</button>
-                    <button id="settingsBtn" class="btn icon-btn" data-translate-title="settings" title="Settings">&#9881;</button>
-                    <button id="logoutBtn" class="btn icon-btn" data-translate-title="logout" title="Logout">&#10162;</button>
-                    <button id="newTaskBtn" class="btn btn-primary" data-translate-key="add_new_task">Add New Task</button>
+            <header class="event-header">
+                <h1 id="pageTitle">Untitled Event Name</h1>
+                <div id="headerEventDateDisplay" class="header-event-date" data-translate-key="no_date_set">
+                    No dates set
                 </div>
             </header>
 
@@ -174,7 +179,6 @@
                                 <button class="btn" data-view="kanban" data-translate-key="kanban">Kanban</button>
                                 <button class="btn" data-view="category" data-translate-key="category">Category</button>
                                 <button class="btn" data-view="budget" data-translate-key="budget">Budget</button>
-                                <button class="btn" data-view="archive" data-translate-key="archive">Archive</button>
                                 <button class="btn" data-view="operations" data-translate-key="operations" style="display: none;">Operations</button>
                             </div>
                         </div>
@@ -205,6 +209,8 @@
                             <label for="totalBudget" data-translate-key="total_budget">Total Budget</label>
                             <input type="number" id="totalBudget" class="filter-input" min="0" step="100" placeholder="2000.00">
                         </div>
+                        <hr>
+                        <button id="viewArchiveBtn" class="btn" data-view="archive" data-translate-key="archive" style="width: 100%;">Archive</button>
                     </div>
                 </div>
                 <div id="categories" class="tab-content">
