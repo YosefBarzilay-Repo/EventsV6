@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const collapseViewToggle = document.getElementById('collapseViewToggle');
     const viewModeGroup = document.getElementById('viewModeGroup');
     const searchInput = document.getElementById('searchInput');
+    const loadingOverlay = document.getElementById('loading-overlay');
     const filterCategorySelect = document.getElementById('filterCategory');
     const collapseAllCategoriesBtn = document.getElementById('collapseAllCategoriesBtn');
     const filterOwnerInput = document.getElementById('filterOwner');
@@ -83,6 +84,14 @@ document.addEventListener('DOMContentLoaded', () => {
             option.textContent = translate(key);
         });
 
+    };
+
+    const showLoader = () => {
+        loadingOverlay.style.display = 'flex';
+    };
+
+    const hideLoader = () => {
+        loadingOverlay.style.display = 'none';
     };
 
     // --- Event-centric Data Model ---
@@ -210,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load initial data
     (async () => {
+        showLoader();
         if (allUsers.length === 0) {
             try {
                 const response = await fetch('settings/usersAndRoles/UsersAndRoles.json');
@@ -226,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Now that all data is loaded, initialize the app UI
         initializeAppUI();
+        hideLoader();
     })();
 
     const getCurrentEvent = () => events.find(e => e.id === currentEventId);
@@ -506,6 +517,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         taskBoard.innerHTML = ''; // Clear board before rendering
 
+        if (filteredTasks.length === 0) {
+            taskBoard.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <h3>No tasks found</h3>
+                    <p>Try adjusting your filters or create a new task.</p>
+                </div>
+            `;
+            taskBoard.style.display = 'block'; // Ensure empty state is visible
+            return;
+        }
+
         statuses.forEach(status => {
             const column = document.createElement('div');
             column.className = 'status-column';
@@ -603,6 +626,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         taskBoard.innerHTML = ''; // Clear board before rendering
 
+        if (filteredTasks.length === 0) {
+            taskBoard.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🗂️</div>
+                    <h3>No tasks in this view</h3>
+                    <p>Create a new task or check your filters.</p>
+                </div>
+            `;
+            return;
+        }
+
         sortedCategories.forEach(category => {
             const categoryGroup = document.createElement('div');
             categoryGroup.className = 'category-group';
@@ -675,7 +709,13 @@ document.addEventListener('DOMContentLoaded', () => {
         taskBoard.innerHTML = ''; // Clear board before rendering
 
         if (filteredTasks.length === 0) {
-            taskBoard.innerHTML = '<p>No archived tasks found.</p>';
+            taskBoard.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🗄️</div>
+                    <h3>Archive is empty</h3>
+                    <p>Archived tasks will appear here.</p>
+                </div>
+            `;
             return;
         }
 
@@ -719,7 +759,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const budgetTasks = tasks.filter(task => parseFloat(task.budget) > 0 && !task.isArchived);
 
         if (budgetTasks.length === 0) {
-            taskBoard.innerHTML = '<p>No tasks with an assigned budget found.</p>';
+            taskBoard.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">💰</div>
+                    <h3>No budgeted tasks</h3>
+                    <p>Add a cost to a task to see it here.</p>
+                </div>
+            `;
             return;
         }
 

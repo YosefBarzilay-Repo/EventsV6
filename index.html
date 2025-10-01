@@ -12,13 +12,18 @@
 <body>
 
     <div class="app-container">
+        <div id="loading-overlay" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+        </div>
         <div class="main-content-wrapper">
             <header class="app-header">
-                <h1 id="pageTitle" contenteditable="true">Untitled Event Name</h1>
-                <div class="event-date-display">
-                    <input type="text" id="eventDateDisplayPicker" class="filter-input" data-translate-placeholder="set_event_dates" placeholder="Set Event Dates">
+                <div class="header-left">
+                    <h1 id="pageTitle" contenteditable="true">Untitled Event Name</h1>
+                    <div class="event-date-display">
+                        <input type="text" id="eventDateDisplayPicker" class="filter-input" data-translate-placeholder="set_event_dates" placeholder="Set Event Dates">
+                    </div>
                 </div>
-                <div class="header-controls">
+                <div class="header-right">
                     <button id="manageEventsBtn" class="btn" data-translate-key="manage_events">Manage Events</button>
                     <button id="settingsBtn" class="btn icon-btn" data-translate-title="settings" title="Settings">&#9881;</button>
                     <button id="logoutBtn" class="btn icon-btn" data-translate-title="logout" title="Logout">&#10162;</button>
