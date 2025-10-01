@@ -119,8 +119,36 @@
                 <input type="file" id="attachment" name="attachment">
                 <span id="attachment-name" class="attachment-info"></span>
 
-                <label for="budget" data-translate-key="budget_label">Budget (Cost):</label>
-                <input type="number" id="budget" name="budget" min="0" step="0.01" placeholder="0.00" autocomplete="off">
+                <div class="budget-toggle-container setting-item">
+                    <label for="isBudgetedTask" data-translate-key="is_budgeted_task">Is this a budgeted task?</label>
+                    <div class="toggle-switch-container">
+                        <input type="checkbox" id="isBudgetedTask" name="isBudgetedTask" class="toggle-switch">
+                        <label for="isBudgetedTask" class="slider"></label>
+                    </div>
+                </div>
+
+                <div id="budgeted-fields-container" style="display: none;">
+                    <hr>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="supplierName" data-translate-key="supplier_name">Supplier Name:</label>
+                            <input type="text" id="supplierName" name="supplierName" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="supplierEmail" data-translate-key="supplier_email">Supplier Email:</label>
+                            <input type="email" id="supplierEmail" name="supplierEmail" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="supplierPhone" data-translate-key="supplier_phone">Supplier Phone:</label>
+                            <input type="tel" id="supplierPhone" name="supplierPhone" autocomplete="off">
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label data-translate-key="payments">Payments:</label>
+                            <div id="payments-container"></div>
+                            <button type="button" id="addPaymentBtn" class="btn btn-secondary" data-translate-key="add_payment">+ Add Payment</button>
+                        </div>
+                    </div>
+                </div>
 
                 <button type="submit" class="btn btn-primary" data-translate-key="save_task">Save Task</button>
             </form>
@@ -194,6 +222,12 @@
             <span class="close-button">&times;</span>
             <h2 data-translate-key="manage_events">Manage Events</h2>
             <div class="setting-item-column">
+                <div class="category-manager-item category-manager-header">
+                    <span class="event-list-name" data-translate-key="event_name">Event Name</span>
+                    <span class="event-list-owner" data-translate-key="owner_label">Owner</span>
+                    <span class="event-list-contact" data-translate-key="contact_phone">Contact Phone</span>
+                    <span class="event-list-date" data-translate-key="event_dates_label">Event Dates</span>
+                </div>
                 <label data-translate-key="your_events">Your Events</label>
                 <ul id="eventManagerList" class="category-manager-list">
                     <!-- Events will be dynamically inserted here -->
@@ -213,13 +247,13 @@
         <div class="modal-content">
             <span class="close-button">&times;</span>
             <h2 data-translate-key="create_new_event">Create New Event</h2>
-            <form id="createEventForm" class="add-event-form">
+            <form id="createEventForm" class="add-event-form" novalidate>
                 <input type="hidden" id="editEventId">
-                <input type="text" id="newEventNameInput" class="filter-input" data-translate-placeholder="new_event_placeholder" placeholder="New event name..." autocomplete="off">
+                <input type="text" id="newEventNameInput" class="filter-input" data-translate-placeholder="new_event_placeholder" placeholder="New event name..." autocomplete="off" style="grid-column: 1 / -1;">
                 <input type="text" id="newEventOwnerInput" class="filter-input" data-translate-placeholder="event_owner_placeholder" placeholder="Event owner..." autocomplete="off">
-                <input type="tel" id="newEventContactNumberInput" class="filter-input" data-translate-placeholder="contact_number_placeholder" placeholder="Contact number..." autocomplete="off">
                 <input type="email" id="newEventContactMailInput" class="filter-input" data-translate-placeholder="contact_email_placeholder" placeholder="Contact email..." autocomplete="off">
-                <div class="date-filter-group" style="grid-column: 1 / -1;">
+                <input type="tel" id="newEventContactNumberInput" class="filter-input" data-translate-placeholder="contact_number_placeholder" placeholder="Contact number..." autocomplete="off">
+                <div class="date-filter-group" style="grid-column: 1 / -1; margin-top: 10px;">
                     <input type="text" id="newEventDatePicker" class="filter-input" data-translate-placeholder="set_event_dates" placeholder="Set Event Dates">
                 </div>
                 <button id="addEventBtn" type="submit" class="btn btn-primary">Create Event</button>

@@ -689,6 +689,39 @@ body {
     box-sizing: border-box;
 }
 
+.budget-toggle-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.payment-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: var(--spacing-sm);
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.payment-row .remove-payment-btn {
+    background-color: var(--color-danger);
+    color: white;
+    padding: 4px 8px;
+}
+
 /* Hide status field in modal by default */
 #status-form-group {
     display: none;
@@ -818,6 +851,25 @@ body {
     margin: 0 20px;
     min-width: 180px;
     text-align: center;
+}
+.category-manager-item .event-list-contact {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin: 0 20px;
+    min-width: 100px;
+}
+
+.category-manager-header {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    border-bottom: 2px solid var(--color-secondary);
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+}
+
+.category-manager-header .event-list-name,
+.category-manager-header .event-list-owner {
+    flex-grow: 0; /* Prevent them from taking all space */
 }
 
 .category-manager-item .edit-event-btn {

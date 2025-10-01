@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const attachmentName = document.getElementById('attachment-name');
     const attachmentInput = document.getElementById('attachment');
     const totalBudgetInput = document.getElementById('totalBudget');
+    const isBudgetedTaskCheckbox = document.getElementById('isBudgetedTask');
+    const budgetedFieldsContainer = document.getElementById('budgeted-fields-container');
+    const addPaymentBtn = document.getElementById('addPaymentBtn');
     const summaryTotalEl = document.getElementById('summaryTotal');
     const summarySpentEl = document.getElementById('summarySpent');
     const summaryRemainingEl = document.getElementById('summaryRemaining');
@@ -134,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Clean up old localStorage items
             ['tasks', 'totalBudget', 'categories', 'currency', 'pageTitle', 'eventDates'].forEach(key => localStorage.removeItem(key));
-            
+
             // Migrate old per-event users to global user list
             const oldUsers = JSON.parse(localStorage.getItem('users'));
             if (oldUsers && oldUsers.length > 0 && allUsers.length === 0) {
@@ -204,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
         });
 
-    // Initialize eventDatePicker with its handlers
+        // Initialize eventDatePicker with its handlers
         eventDatePicker = new Litepicker({
             element: document.getElementById('newEventDatePicker'),
             singleMode: false,
@@ -212,6 +215,51 @@ document.addEventListener('DOMContentLoaded', () => {
             lang: currentLanguage,
             minDate: new Date(),
         });
+    };
+
+    const addEvent = () => {
+        const newEventName = newEventNameInput.value.trim();
+        const eventId = editEventIdInput.value;
+
+        if (!newEventName) {
+            alert("Event name cannot be empty.");
+            return;
+        }
+
+        if (eventId) {
+            // Editing an existing event
+            const event = events.find(e => e.id == eventId);
+            if (event) {
+                event.name = newEventName;
+                event.owner = newEventOwnerInput.value.trim();
+                event.contactNumber = newEventContactNumberInput.value.trim();
+                event.contactMail = newEventContactMailInput.value.trim();
+                event.eventDates.start = eventDatePicker.getStartDate() ? eventDatePicker.getStartDate().toJSDate().toISOString() : null;
+                event.eventDates.end = eventDatePicker.getEndDate() ? eventDatePicker.getEndDate().toJSDate().toISOString() : null;
+            }
+        } else {
+            // Creating a new event
+            const newEventOwner = newEventOwnerInput.value.trim() || 'Admin';
+            const startDate = eventDatePicker.getStartDate() ? eventDatePicker.getStartDate().toJSDate().toISOString() : null;
+            const endDate = eventDatePicker.getEndDate() ? eventDatePicker.getEndDate().toJSDate().toISOString() : null;
+
+            const newEvent = {
+                id: Date.now(),
+                name: newEventName,
+                owner: newEventOwner,
+                contactNumber: newEventContactNumberInput.value.trim(),
+                contactMail: newEventContactMailInput.value.trim(),
+                tasks: [],
+                totalBudget: 0,
+                categories: ['General', 'Planning', 'Execution'],
+                currency: 'USD',
+                eventDates: { start: startDate, end: endDate }
+            };
+            events.push(newEvent);
+            switchEvent(newEvent.id);
+        }
+
+        saveAppData();
     };
 
     function initializeAppUI() {
@@ -241,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (events.length === 0 && useMockData && typeof mockTasks !== 'undefined') {
             initializeAppData(allUsers);
         }
-        
+
         // Now that all data is loaded, initialize the app UI
         initializeAppUI();
         hideLoader();
@@ -292,63 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const switchEvent = (eventId) => {
-        currentEventId = eventId;
-        saveAppData();
-        syncDataFromCurrentEvent();
-        loadCurrentEvent();
-        closeEventManagerModal();
-    };
-
-    const addEvent = () => {
-        const newEventName = newEventNameInput.value.trim();
-        const eventId = editEventIdInput.value;
-
-        if (!newEventName) {
-            alert("Event name cannot be empty.");
-            return;
-        }
-
-        if (eventId) {
-            // Editing an existing event
-            const event = events.find(e => e.id == eventId);
-            if (event) {
-                event.name = newEventName;
-                event.owner = newEventOwnerInput.value.trim();
-                event.contactNumber = newEventContactNumberInput.value.trim();
-                event.contactMail = newEventContactMailInput.value.trim();
-                event.eventDates.start = eventDatePicker.getStartDate() ? eventDatePicker.getStartDate().toJSDate().toISOString() : null;
-                event.eventDates.end = eventDatePicker.getEndDate() ? eventDatePicker.getEndDate().toJSDate().toISOString() : null;
-            }
-        } else {
-            // Creating a new event
-            const newEventOwner = newEventOwnerInput.value.trim() || 'Admin';
-            const startDate = eventDatePicker.getStartDate() ? eventDatePicker.getStartDate().toJSDate().toISOString() : null;
-            const endDate = eventDatePicker.getEndDate() ? eventDatePicker.getEndDate().toJSDate().toISOString() : null;
-
-            const newEvent = {
-                id: Date.now(),
-                name: newEventName,
-                owner: newEventOwner,
-                contactNumber: newEventContactNumberInput.value.trim(),
-                contactMail: newEventContactMailInput.value.trim(),
-                tasks: [],
-                totalBudget: 0,
-                categories: ['General', 'Planning', 'Execution'],
-                currency: 'USD',
-                eventDates: { start: startDate, end: endDate }
-            };
-            events.push(newEvent);
-        }
-
-        saveAppData();
-        renderEventManager();
-        closeCreateEventModal();
-        if (eventId == currentEventId) {
-            loadCurrentEvent(); // Refresh main UI if the active event was edited
-        }
-    };
-
     const formatEventListDate = (event) => {
         if (!event.eventDates || !event.eventDates.start) {
             return translate('no_date_set');
@@ -372,6 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
             li.innerHTML = `
                 <span class="event-list-name">${event.name}</span>
                 <span class="event-list-owner">${event.owner || ''}</span>
+                <span class="event-list-contact">${event.contactNumber || ''}</span>
                 <span class="event-list-date">${formatEventListDate(event)}</span>
                 <div class="category-manager-actions">
                     <button class="edit-event-btn" title="Edit Event" data-event-id="${event.id}">&#9998;</button>
@@ -391,6 +383,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const closeEventManagerModal = () => {
         eventManagerModal.style.display = 'none';
+    };
+
+    const switchEvent = (eventId) => {
+        currentEventId = eventId;
+        saveAppData();
+        syncDataFromCurrentEvent();
+        loadCurrentEvent();
+        closeEventManagerModal();
     };
 
     const openCreateEventModal = () => {
@@ -443,6 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('dueDate').setAttribute('min', today);
         populateTaskOwnerDropdown();
         populateAllCategoryDropdowns();
+
         modal.style.display = 'block';
     };
 
@@ -454,6 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle.textContent = 'Add New Task';
         taskIdField.value = '';
         taskIdDisplay.style.display = 'none';
+        document.getElementById('payments-container').innerHTML = '';
         attachmentName.textContent = '';
     };
 
@@ -920,6 +922,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return newId;
     };
 
+    const addPaymentRow = (amount = '', date = '') => {
+        const paymentsContainer = document.getElementById('payments-container');
+        const newRow = document.createElement('div');
+        newRow.className = 'payment-row';
+        newRow.innerHTML = `
+            <input type="number" class="payment-amount filter-input" placeholder="Amount" value="${amount}" step="0.01" min="0">
+            <input type="date" class="payment-date filter-input" value="${date}">
+            <button type="button" class="btn remove-payment-btn">Remove</button>
+        `;
+
+        // Add event listener to remove button
+        newRow.querySelector('.remove-payment-btn').addEventListener('click', () => {
+            newRow.remove();
+        });
+
+        paymentsContainer.appendChild(newRow);
+    };
+
+
     const handleFormSubmit = (e) => {
         e.preventDefault();
 
@@ -943,9 +964,32 @@ document.addEventListener('DOMContentLoaded', () => {
             dueDate: document.getElementById('dueDate').value,
             owner: document.getElementById('owner').value,
             description: quill.root.innerHTML,
-            budget: document.getElementById('budget').value,
             attachment: attachmentFile ? { name: attachmentFile.name, type: attachmentFile.type } : null,
+            isBudgeted: isBudgetedTaskCheckbox.checked,
+            supplierName: '',
+            supplierEmail: '',
+            supplierPhone: '',
+            payments: [],
+            budget: 0
         };
+
+        if (taskData.isBudgeted) {
+            taskData.supplierName = document.getElementById('supplierName').value;
+            taskData.supplierEmail = document.getElementById('supplierEmail').value;
+            taskData.supplierPhone = document.getElementById('supplierPhone').value;
+
+            const paymentRows = document.querySelectorAll('.payment-row');
+            let totalBudgetFromPayments = 0;
+            paymentRows.forEach(row => {
+                const amount = parseFloat(row.querySelector('.payment-amount').value);
+                const date = row.querySelector('.payment-date').value;
+                if (!isNaN(amount) && amount > 0) {
+                    taskData.payments.push({ amount, date });
+                    totalBudgetFromPayments += amount;
+                }
+            });
+            taskData.budget = totalBudgetFromPayments;
+        }
 
         // If status field is visible (i.e., editing in category view), add it to the data
         if (modal.classList.contains('show-status')) {
@@ -995,7 +1039,24 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('dueDate').value = task.dueDate;
         document.getElementById('owner').value = task.owner;
         quill.root.innerHTML = task.description || '';
-        document.getElementById('budget').value = task.budget;
+
+        if (task.isBudgeted) {
+            document.getElementById('supplierName').value = task.supplierName || '';
+            isBudgetedTaskCheckbox.checked = true;
+            budgetedFieldsContainer.style.display = 'block';
+            document.getElementById('supplierEmail').value = task.supplierEmail || '';
+            document.getElementById('supplierPhone').value = task.supplierPhone || '';
+
+            const paymentsContainer = document.getElementById('payments-container');
+            paymentsContainer.innerHTML = ''; // Clear existing
+            if (task.payments && task.payments.length > 0) {
+                task.payments.forEach(payment => addPaymentRow(payment.amount, payment.date));
+            }
+        } else {
+            isBudgetedTaskCheckbox.checked = false;
+            budgetedFieldsContainer.style.display = 'none';
+        }
+
 
         if (task.attachment) {
             attachmentName.textContent = `Current file: ${task.attachment.name}`;
@@ -1164,6 +1225,18 @@ document.addEventListener('DOMContentLoaded', () => {
         saveCurrency();
     });
 
+    isBudgetedTaskCheckbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            budgetedFieldsContainer.style.display = 'block';
+        } else {
+            budgetedFieldsContainer.style.display = 'none';
+        }
+    });
+
+    addPaymentBtn.addEventListener('click', () => {
+        addPaymentRow('', '');
+    });
+
     // --- View Toggler ---
     collapseViewToggle.addEventListener('change', (e) => {
         const isCollapsed = e.target.checked;
@@ -1287,7 +1360,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    
+
     // --- Settings Modal & Tabs ---
     const openSettingsModal = () => {
         // Show/hide users tab based on role
@@ -1300,7 +1373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsModal.style.display = 'block';
         openTab(null, 'general'); // Open general tab by default
     };
-    
+
     const openTab = (evt, tabName) => {
         // Get all elements with class="tab-content" and hide them
         const tabcontent = settingsModal.getElementsByClassName("tab-content");
@@ -1343,7 +1416,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-        const closeSettingsModal = () => {
+    const closeSettingsModal = () => {
         settingsModal.style.display = 'none';
     };
 
@@ -1373,6 +1446,8 @@ document.addEventListener('DOMContentLoaded', () => {
             closeCreateEventModal();
         }
     });
+
+    taskForm.addEventListener('submit', handleFormSubmit);
 
     // Initial View Mode Setup
     const savedViewMode = localStorage.getItem('viewMode') || 'kanban';
