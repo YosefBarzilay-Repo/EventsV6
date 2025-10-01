@@ -56,7 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const addEventBtn = document.getElementById('addEventBtn');
     const editEventIdInput = document.getElementById('editEventId');
     const headerEventDateDisplay = document.getElementById('headerEventDateDisplay');
-    const currentViewNameEl = document.getElementById('currentViewName');
     const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
     // --- Mock Data Control Flag ---
@@ -378,6 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const openEventManagerModal = () => {
         renderEventManager();
+        document.body.classList.add('modal-open');
         eventManagerModal.style.display = 'block';
     };
 
@@ -400,6 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addEventBtn.textContent = translate('create_event');
         eventDatePicker.clearSelection();
         eventManagerModal.style.display = 'none'; // Close the manager modal
+        document.body.classList.add('modal-open');
         createEventModal.style.display = 'block';
     };
 
@@ -425,11 +426,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         eventManagerModal.style.display = 'none';
+        document.body.classList.add('modal-open');
         createEventModal.style.display = 'block';
     };
 
     const closeCreateEventModal = () => {
         createEventModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
     };
 
     // --- End Event Management ---
@@ -444,6 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
         populateTaskOwnerDropdown();
         populateAllCategoryDropdowns();
 
+        document.body.classList.add('modal-open');
         modal.style.display = 'block';
     };
 
@@ -451,6 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (quill) quill.setText(''); // Clear the editor
         modal.classList.remove('show-status');
         modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
         taskForm.reset();
         modalTitle.textContent = 'Add New Task';
         taskIdField.value = '';
@@ -1394,12 +1399,6 @@ document.addEventListener('DOMContentLoaded', () => {
             button.classList.toggle('active', button.dataset.view === activeView);
         });
 
-        // Update the main header view title
-        const activeBtn = viewModeGroup.querySelector(`[data-view="${activeView}"]`);
-        const viewKey = activeBtn ? activeBtn.dataset.translateKey : (activeView === 'archive' ? 'archive' : 'kanban');
-        currentViewNameEl.textContent = translate(viewKey);
-        currentViewNameEl.dataset.translateKey = viewKey;
-
         // Show/hide operations button based on role
         const opsButton = viewModeGroup.querySelector('[data-view="operations"]');
         if (opsButton) {
@@ -1464,6 +1463,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             usersTab.style.display = 'none';
         }
+        document.body.classList.add('modal-open');
         settingsModal.style.display = 'block';
         openTab(null, 'general'); // Open general tab by default
     };
@@ -1512,6 +1512,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const closeSettingsModal = () => {
         settingsModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
     };
 
     // Setup Modal Listeners

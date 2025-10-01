@@ -37,6 +37,10 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+body.modal-open {
+    overflow: hidden;
+}
+
 .global-header {
     background-color: var(--color-surface);
     padding: 0 var(--spacing-lg);
@@ -694,8 +698,8 @@ body {
     margin: 5% auto;
     padding: 20px 30px;
     border: 1px solid var(--color-secondary);
-    width: 80%;
-    max-width: 500px;
+    width: 90%;
+    max-width: 750px; /* 500px * 1.5 */
     border-radius: var(--radius-lg);
     position: relative;
 }
@@ -990,12 +994,15 @@ body {
 /* Force Quill toolbar to a single line */
 .ql-toolbar.ql-snow {
     display: flex;
+    justify-content: center;   /* centers toolbar groups */
     flex-wrap: nowrap;
-    overflow-x: auto;
-    /* Add scroll for smaller screens */
-    box-sizing: border-box;
-    padding: 8px;
-    border-bottom: 1px solid var(--color-secondary);
+    overflow-x: auto;          /* scroll if there’s no space */
+    white-space: nowrap;
+}
+
+.ql-toolbar.ql-snow .ql-formats {
+    display: flex;
+    flex-wrap: nowrap;
 }
 
 #taskForm button {
