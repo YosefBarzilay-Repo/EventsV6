@@ -44,6 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateRangePickerEl = document.getElementById('dateRangePicker');
     const currencySelect = document.getElementById('currencySelect');
     const newEventNameInput = document.getElementById('newEventNameInput');
+    const newEventOwnerInput = document.getElementById('newEventOwnerInput');
+    const newEventContactNumberInput = document.getElementById('newEventContactNumberInput');
+    const newEventContactMailInput = document.getElementById('newEventContactMailInput');
     const addEventBtn = document.getElementById('addEventBtn');
     const eventDateDisplayPickerEl = document.getElementById('eventDateDisplayPicker');
     const clearFiltersBtn = document.getElementById('clearFiltersBtn');
@@ -117,7 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 categories: JSON.parse(localStorage.getItem('categories')) || ['Work', 'Personal', 'Shopping', 'Health', 'Other'],
                 // Users are now global, not per-event
                 currency: localStorage.getItem('currency') || 'EUR',
-                eventDates: { start: null, end: null }
+                eventDates: { start: null, end: null },
+                owner: 'Admin',
+                contactNumber: '',
+                contactMail: ''
             };
             events = [newEvent];
             currentEventId = newEvent.id;
@@ -151,7 +157,10 @@ document.addEventListener('DOMContentLoaded', () => {
             totalBudget: 50000,
             categories: [...new Set(mockTasks.map(t => t.category))],
             currency: 'USD',
-            eventDates: { start: null, end: null }
+            eventDates: { start: null, end: null },
+            owner: 'Admin',
+            contactNumber: '555-1234',
+            contactMail: 'admin@example.com'
         };
         events.push(newEvent);
         currentEventId = newEvent.id;
@@ -299,10 +308,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const addEvent = () => {
         const newEventName = newEventNameInput.value.trim();
+        const newEventOwner = newEventOwnerInput.value.trim();
         if (newEventName) {
             const newEvent = {
                 id: Date.now(),
                 name: newEventName,
+                owner: newEventOwner,
+                contactNumber: newEventContactNumberInput.value.trim(),
+                contactMail: newEventContactMailInput.value.trim(),
                 tasks: [],
                 totalBudget: 0,
                 categories: ['General', 'Planning', 'Execution'],
@@ -310,7 +323,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 eventDates: { start: null, end: null }
             };
             events.push(newEvent);
+            // Clear input fields
             newEventNameInput.value = '';
+            newEventOwnerInput.value = '';
+            newEventContactNumberInput.value = '';
+            newEventContactMailInput.value = '';
+
             renderEventManager();
             switchEvent(newEvent.id);
         }
@@ -338,6 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             li.innerHTML = `
                 <span class="event-list-name">${event.name}</span>
+                <span class="event-list-owner">${event.owner || ''}</span>
                 <span class="event-list-date">${formatEventListDate(event)}</span>
             `;
             li.querySelector('.event-list-name').addEventListener('click', () => switchEvent(event.id));

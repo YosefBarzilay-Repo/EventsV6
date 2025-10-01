@@ -56,6 +56,9 @@ const translations = {
         'your_events': 'Your Events',
         'no_date_set': 'No date set',
         'create_new_event': 'Create New Event',
+        'event_owner_placeholder': 'Event owner...',
+        'contact_number_placeholder': 'Contact number...',
+        'contact_email_placeholder': 'Contact email...',
         'new_event_placeholder': 'New event name...',
         'create_event': 'Create Event',
         // JS Alerts & Prompts
@@ -132,6 +135,9 @@ const translations = {
         'your_events': 'האירועים שלך',
         'no_date_set': 'לא הוגדר תאריך',
         'create_new_event': 'צור אירוע חדש',
+        'event_owner_placeholder': 'בעל האירוע...',
+        'contact_number_placeholder': 'מספר ליצירת קשר...',
+        'contact_email_placeholder': 'מייל ליצירת קשר...',
         'new_event_placeholder': 'שם אירוע חדש...',
         'create_event': 'צור אירוע',
         // JS Alerts & Prompts
